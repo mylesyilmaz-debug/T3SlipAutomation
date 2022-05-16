@@ -28,6 +28,11 @@ build
 *.sync
 
 
+### Temporary Files ###
+.temp/
+/.temp/
+
+
 ### IntelliJ IDEA ###
 .idea
 *.iws
