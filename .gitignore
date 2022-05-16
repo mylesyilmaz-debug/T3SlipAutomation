@@ -52,6 +52,8 @@ src/test/resources/reportportal.properties
 .env.map
 *.env.map
 .envproject=plan_
+/environments
+/environments/**
 
 
 ### VS Code ###

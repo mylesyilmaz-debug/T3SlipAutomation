@@ -1,0 +1,23 @@
+environment:
+  name: PORTALSTAGE
+  file: "./environments/stage.env"
+
+profiles:
+  - name: chrome-desktop
+    driverFramework: base
+    proxy:
+      port: 9090
+      enabled: false
+    capabilities:
+      - name: 'browser.name'
+        value: 'chrome'
+      - name: 'browser.version'
+        value: '99.0'
+      - name: 'browser.headless'
+        value: 'true'
+
+  - name: iphone-13-browserstack
+    driverFramework: browserstack
+    capabilities:
+      - name: ''
+        value: ''
