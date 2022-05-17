@@ -3,8 +3,8 @@ environment:
   file: "./environments/stage.env"
 
 profiles:
-  - name: chrome-desktop
-    driverFramework: base
+  - name: "chrome-desktop"
+    driverFramework: "base"
     proxy:
       port: 9090
       enabled: false
@@ -13,11 +13,20 @@ profiles:
         value: 'chrome'
       - name: 'browser.version'
         value: '99.0'
-      - name: 'browser.headless'
-        value: 'true'
+    arguments:
+      - "--headless"
+      - "--ignore-certificate-errors"
+      - "--start-fullscreen"
+    preferences:
+      - name: "plugins.always_open_pdf_externally"
+        value: false
 
   - name: iphone-13-browserstack
     driverFramework: browserstack
     capabilities:
-      - name: ''
-        value: ''
+      - name: "os_version"
+        value: "15"
+      - name: "device"
+        value: "iPhone 13"
+      - name: "real_mobile"
+        value: "true"

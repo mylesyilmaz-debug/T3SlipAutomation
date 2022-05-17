@@ -10,6 +10,8 @@ public class ProfileModel {
     @JsonProperty private String driverFramework;
     @JsonProperty private ProxyModel proxyModel;
     @JsonProperty private List<CapabilityModel> capabilities;
+    @JsonProperty private List<String> arguments;
+    @JsonProperty private List<PreferenceModel> preferences;
 
     public String getName() {
         return name;
@@ -29,5 +31,13 @@ public class ProfileModel {
 
     public List<CapabilityModel> getCapabilities() {
         return capabilities;
+    }
+
+    public List<String> getArguments() {
+        return arguments;
+    }
+
+    public List<PreferenceModel> getPreferences() {
+        return preferences;
     }
 }
