@@ -100,7 +100,13 @@ public class Hooks {
     /** Creates the driver that will be used for this test if it is not an API test */
     @Before(value = "not @api", order = 3)
     public void createDriver() {
+        setDriver(DriverFactory.createDriver(config.getConfigurationModel().getProfile()));
 
+        if (config.getParallel()) {
+            System.out.printf(
+                    "[Thread %2d] Running -> [Scenario: %s] - FAILED - (*_*)%n",
+                    Thread.currentThread().getId(), getScenario().getName());
+        }
     }
 
     /**
@@ -287,5 +293,9 @@ public class Hooks {
 
     public Config getConfig() {
         return config;
+    }
+
+    private static void setDriver(WebDriver driver) {
+        drivers.set(driver);
     }
 }

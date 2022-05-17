@@ -11,15 +11,15 @@ import java.io.IOException;
 /** Represents a YAML configuration file */
 public class Config {
     private ConfigurationModel configurationModel;
+    private boolean parallel;
 
     /**
-     * Creates a Config with the provided configuration model.
-     *
-     * @param configurationModel - the configuration model to use.
+     * Creates a Config that can be modified using its fluent API
      */
-    public Config(@NotNull ConfigurationModel configurationModel)
+    public Config()
     {
-        setConfigurationModel(configurationModel);
+        setConfigurationModel(null);
+        setParallel(false);
     }
 
     /**
@@ -29,6 +29,8 @@ public class Config {
      * @throws IOException if an IOException occurs when loading the provided YAML file.
      */
     public Config(@NotNull File configYaml) throws IOException {
+        this();
+
         if (!configYaml.exists()) {
             throw new IllegalArgumentException(
                     "The provided file " + configYaml.getPath() + " does not exist.");
@@ -38,7 +40,7 @@ public class Config {
         }
 
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-        configurationModel = mapper.readValue(configYaml, ConfigurationModel.class);
+        setConfigurationModel(mapper.readValue(configYaml, ConfigurationModel.class));
     }
 
     /**
@@ -55,8 +57,18 @@ public class Config {
         return configurationModel;
     }
 
+    public boolean getParallel() {
+        return parallel;
+    }
+
     public Config setConfigurationModel(ConfigurationModel configurationModel) {
         this.configurationModel = configurationModel;
+        return this;
+    }
+
+    public Config setParallel(boolean parallel)
+    {
+        this.parallel = parallel;
         return this;
     }
 }
