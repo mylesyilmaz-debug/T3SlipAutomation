@@ -12,6 +12,15 @@ public class ProfileModel {
     @JsonProperty private List<String> arguments;
     @JsonProperty private List<PreferenceModel> preferences;
 
+    public ProfileModel() {
+        setName(null);
+        setDescription(null);
+        setDriverFramework(null);
+        setCapabilities(null);
+        setArguments(null);
+        setPreferences(null);
+    }
+
     public String getName() {
         return name;
     }
@@ -34,5 +43,35 @@ public class ProfileModel {
 
     public List<PreferenceModel> getPreferences() {
         return preferences;
+    }
+
+    public ProfileModel setName(String name) {
+        this.name = name;
+        return this;
+    }
+
+    public ProfileModel setDescription(String description) {
+        this.description = description;
+        return this;
+    }
+
+    public ProfileModel setDriverFramework(String driverFramework) {
+        this.driverFramework = driverFramework;
+        return this;
+    }
+
+    public ProfileModel setCapabilities(List<CapabilityModel> capabilities) {
+        this.capabilities = capabilities;
+        return this;
+    }
+
+    public ProfileModel setArguments(List<String> arguments) {
+        this.arguments = arguments;
+        return this;
+    }
+
+    public ProfileModel setPreferences(List<PreferenceModel> preferences) {
+        this.preferences = preferences;
+        return this;
     }
 }

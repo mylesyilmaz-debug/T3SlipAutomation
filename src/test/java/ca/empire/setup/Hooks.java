@@ -23,10 +23,20 @@ public class Hooks {
     private static final ThreadLocal<TestEnvironment> testEnvironments = new ThreadLocal<>();
     private static final ThreadLocal<WebDriver> drivers = new ThreadLocal<>();
 
-    private final Config config;
-    private ProfileModel profileModel;
+    private Config config;
 
-    public Hooks() throws IOException {
+    public Hooks() {}
+
+    /*
+    ====================================================================================================================
+                                                        Before Hooks
+    ====================================================================================================================
+     */
+
+    /* Standard Hooks */
+
+    @Before(order = 0)
+    public void loadConfig() throws IOException {
         String configFilepath = System.getProperty("config.filepath", null);
         String configProfile = System.getProperty("config.profile", null);
 
@@ -37,12 +47,12 @@ public class Hooks {
         }
 
         config = new Config(configFilepath);
-        profileModel = null;
+        ProfileModel profileModel = null;
         List<ProfileModel> profileModelList = config.getConfigurationModel().getProfiles();
 
-        for (ProfileModel profileModel : profileModelList) {
-            if (profileModel.getName().equals(configProfile)) {
-                this.profileModel = profileModel;
+        for (ProfileModel model : profileModelList) {
+            if (model.getName().equals(configProfile)) {
+                profileModel = model;
                 break;
             }
         }
@@ -51,15 +61,9 @@ public class Hooks {
             throw new IllegalArgumentException(
                     configProfile + " is not declared in " + configFilepath);
         }
+
+        config.getConfigurationModel().setProfile(profileModel);
     }
-
-    /*
-    ====================================================================================================================
-                                                        Before Hooks
-    ====================================================================================================================
-     */
-
-    /* Standard Hooks */
 
     /**
      * Creates the test environment that will be used for this test. If a .env file is declared in
@@ -67,7 +71,7 @@ public class Hooks {
      *
      * @throws IOException when there was an issue loading in the provided .env file.
      */
-    @Before(order = 0)
+    @Before(order = 1)
     public void loadEnvironment() throws IOException {
         EnvironmentModel environmentModel =
                 getConfig().getConfigurationModel().getEnvironmentModel();
@@ -88,15 +92,15 @@ public class Hooks {
      *
      * @param scenario - The cucumber scenario for this test
      */
-    @Before(order = 1)
+    @Before(order = 2)
     public void setScenario(Scenario scenario) {
         scenarios.set(scenario);
     }
 
     /** Creates the driver that will be used for this test if it is not an API test */
-    @Before(value = "not @api", order = 2)
+    @Before(value = "not @api", order = 3)
     public void createDriver() {
-        /* ... */
+
     }
 
     /**
@@ -104,7 +108,7 @@ public class Hooks {
      *
      * @throws IOException if we are unable to create the required directories.
      */
-    @Before(order = 3)
+    @Before(order = 4)
     public void createDownloadDirectory() throws IOException {
         String separator = File.separator;
         String basePath =
@@ -156,7 +160,7 @@ public class Hooks {
         String jsScript;
         Status testStatus;
 
-        if (!profileModel.getDriverFramework().equals("browserstack")) {
+        if (!config.getConfigurationModel().getProfile().getDriverFramework().equals("browserstack")) {
             return;
         }
 

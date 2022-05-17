@@ -10,7 +10,17 @@ import java.io.IOException;
 
 /** Represents a YAML configuration file */
 public class Config {
-    private final ConfigurationModel configurationModel;
+    private ConfigurationModel configurationModel;
+
+    /**
+     * Creates a Config with the provided configuration model.
+     *
+     * @param configurationModel - the configuration model to use.
+     */
+    public Config(@NotNull ConfigurationModel configurationModel)
+    {
+        setConfigurationModel(configurationModel);
+    }
 
     /**
      * Loads in the provided YAML file.
@@ -43,5 +53,10 @@ public class Config {
 
     public ConfigurationModel getConfigurationModel() {
         return configurationModel;
+    }
+
+    public Config setConfigurationModel(ConfigurationModel configurationModel) {
+        this.configurationModel = configurationModel;
+        return this;
     }
 }
