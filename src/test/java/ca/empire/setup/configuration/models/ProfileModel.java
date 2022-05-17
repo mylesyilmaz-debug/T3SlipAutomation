@@ -8,7 +8,6 @@ public class ProfileModel {
     @JsonProperty private String name;
     @JsonProperty private String description;
     @JsonProperty private String driverFramework;
-    @JsonProperty private ProxyModel proxyModel;
     @JsonProperty private List<CapabilityModel> capabilities;
     @JsonProperty private List<String> arguments;
     @JsonProperty private List<PreferenceModel> preferences;
@@ -23,10 +22,6 @@ public class ProfileModel {
 
     public String getDriverFramework() {
         return driverFramework;
-    }
-
-    public ProxyModel getProxyModel() {
-        return proxyModel;
     }
 
     public List<CapabilityModel> getCapabilities() {

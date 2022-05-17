@@ -5,9 +5,6 @@ environment:
 profiles:
   - name: "chrome-desktop"
     driverFramework: "base"
-    proxy:
-      port: 9090
-      enabled: false
     capabilities:
       - name: 'browser.name'
         value: 'chrome'
@@ -15,6 +12,7 @@ profiles:
         value: '99.0'
     arguments:
       - "--headless"
+      - "--disable-gpu"
       - "--ignore-certificate-errors"
       - "--start-fullscreen"
     preferences:
