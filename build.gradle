@@ -39,59 +39,68 @@ configurations {
 
 dependencies {
     // Selenium
-    implementation group: 'org.seleniumhq.selenium', name: 'selenium-java', version: selenium_version
-    implementation group: 'org.seleniumhq.selenium', name: 'selenium-api', version: selenium_version
+    testImplementation group: 'org.seleniumhq.selenium', name: 'selenium-java', version: selenium_version
+    testImplementation group: 'org.seleniumhq.selenium', name: 'selenium-api', version: selenium_version
 
     // Cucumber
-    implementation group: 'io.cucumber', name: 'cucumber-core', version: cucumber_version
-    implementation group: 'io.cucumber', name: 'cucumber-picocontainer', version: cucumber_version
-    implementation group: 'io.cucumber', name: 'cucumber-java', version: cucumber_version
-    implementation group: 'io.cucumber', name: 'cucumber-junit', version: cucumber_version
-    implementation group: 'io.cucumber', name: 'gherkin', version: '23.0.1'
+    testImplementation group: 'io.cucumber', name: 'cucumber-core', version: cucumber_version
+    testImplementation group: 'io.cucumber', name: 'cucumber-picocontainer', version: cucumber_version
+    testImplementation group: 'io.cucumber', name: 'cucumber-java', version: cucumber_version
+    testImplementation group: 'io.cucumber', name: 'cucumber-junit', version: cucumber_version
+    testImplementation group: 'io.cucumber', name: 'gherkin', version: '23.0.1'
 
     // ReportPortal
-    implementation group: 'com.epam.reportportal', name: 'client-java', version: '5.1.4'
-    implementation group: 'com.epam.reportportal', name: 'agent-java-cucumber6', version: '5.1.1'
-    implementation group: 'com.epam.reportportal', name: 'agent-java-junit5', version: '5.1.1'
-    implementation group: 'com.epam.reportportal', name: 'httpclient-repacked', version: '1.0.2'
+    testImplementation group: 'com.epam.reportportal', name: 'client-java', version: '5.1.4'
+    testImplementation group: 'com.epam.reportportal', name: 'agent-java-cucumber6', version: '5.1.1'
+    testImplementation group: 'com.epam.reportportal', name: 'agent-java-junit5', version: '5.1.1'
+    testImplementation group: 'com.epam.reportportal', name: 'httpclient-repacked', version: '1.0.2'
 
     // Jackson
-    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jackson_version
-    implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: jackson_version
-    implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: jackson_version
+    testImplementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jackson_version
+    testImplementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: jackson_version
+    testImplementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: jackson_version
 
     // Other
-    implementation group: 'io.github.bonigarcia', name: 'webdrivermanager', version: driver_manager_version
-    implementation group: 'io.rest-assured', name: 'rest-assured', version: rest_assured_version
-    implementation group: 'org.json', name: 'json', version: '20220320'
-    implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
-    implementation group: 'org.apache.pdfbox', name: 'pdfbox', version: '2.0.26'
-    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.10'
-    implementation group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.4.13'
-    implementation group: 'org.awaitility', name: 'awaitility', version: '4.0.3'
-    implementation group: 'net.lightbody.bmp', name: 'browsermob-core', version: '2.1.5'
-    implementation group: 'io.percy', name: 'percy-java-selenium', version: '0.1.4'
-    implementation group: 'org.jsoup', name: 'jsoup', version: '1.15.1'
-    implementation group: 'org.apache.poi', name: 'poi', version: apache_poi_version
-    implementation group: 'org.apache.poi', name: 'poi-ooxml', version: apache_poi_version
-    implementation group: 'io.appium', name: 'java-client', version: appium_version
-    implementation group: 'org.jetbrains', name: 'annotations', version: '23.0.0'
-    implementation group: 'com.jayway.jsonpath', name: 'json-path', version: '2.6.0'
-    implementation group: 'xml-apis', name: 'xml-apis', version: xml_apis_version
+    testImplementation group: 'io.github.bonigarcia', name: 'webdrivermanager', version: driver_manager_version
+    testImplementation group: 'io.rest-assured', name: 'rest-assured', version: rest_assured_version
+    testImplementation group: 'org.json', name: 'json', version: '20220320'
+    testImplementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
+    testImplementation group: 'org.apache.pdfbox', name: 'pdfbox', version: '2.0.26'
+    testImplementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.10'
+    testImplementation group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.4.13'
+    testImplementation group: 'org.awaitility', name: 'awaitility', version: '4.0.3'
+    testImplementation group: 'net.lightbody.bmp', name: 'browsermob-core', version: '2.1.5'
+    testImplementation group: 'io.percy', name: 'percy-java-selenium', version: '0.1.4'
+    testImplementation group: 'org.jsoup', name: 'jsoup', version: '1.15.1'
+    testImplementation group: 'org.apache.poi', name: 'poi', version: apache_poi_version
+    testImplementation group: 'org.apache.poi', name: 'poi-ooxml', version: apache_poi_version
+    testImplementation group: 'io.appium', name: 'java-client', version: appium_version
+    testImplementation group: 'org.jetbrains', name: 'annotations', version: '23.0.0'
+    testImplementation group: 'com.jayway.jsonpath', name: 'json-path', version: '2.6.0'
+    testImplementation group: 'xml-apis', name: 'xml-apis', version: xml_apis_version
 
-    implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.36'
-    implementation group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.36'
-    implementation group: 'org.assertj', name: 'assertj-core', version: '3.22.0'
-    implementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.8.2'
-    implementation group: 'junit', name: 'junit', version: '4.13.2'
+    testImplementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.36'
+    testImplementation group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.36'
+    testImplementation group: 'org.assertj', name: 'assertj-core', version: '3.22.0'
+    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.8.2'
+    testImplementation group: 'junit', name: 'junit', version: '4.13.2'
 }
 
+test {
+    systemProperty "cucumber.options", System.getProperty("cucumber.options")
+    systemProperty "cucumber.filter.tags", System.getProperty("cucumber.filter.tags")
+    systemProperty "config.filepath", System.getProperty("config.filepath")
+    systemProperty "config.profile", System.getProperty("config.profile")
+
+    System.getProperty("parallel", "false")
+    System.getProperty("threads", "1")
+}
 
 task cucumber() {
     dependsOn assemble, testClasses
     doLast {
         javaexec {
-            String threads = System.getProperty("threads", "1")
+            String threads = project.property("threads") == null ? "1" : project.property("threads")
             int parsedThreads = Integer.parseInt(threads)
 
             if (parsedThreads < 1) {
@@ -109,11 +118,10 @@ task cucumber() {
 
             main = "io.cucumber.core.cli.Main"
             classpath = configurations.cucumberRuntime + sourceSets.main.output + sourceSets.test.output
-            args = ['--plugin', 'pretty',
+            args = ['src/test/resources/feature',
                     '--plugin', 'com.epam.reportportal.cucumber.ScenarioReporter',
                     '--glue', 'ca.empire',
-                    'src/test/resources/feature',
-                    '--threads', System.getProperty("threads", threads)]
+                    '--threads', threads]
         }
     }
 }

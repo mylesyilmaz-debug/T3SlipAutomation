@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Level;
 
 public class Hooks {
     private static final ThreadLocal<Scenario> scenarios = new ThreadLocal<>();
@@ -24,6 +25,12 @@ public class Hooks {
     private static final ThreadLocal<WebDriver> drivers = new ThreadLocal<>();
 
     private Config config;
+
+    static {
+        // This should help clean up the logs.
+        System.setProperty("webdriver.chrome.silentOutput", "true");
+        java.util.logging.Logger.getLogger("org.openqa.selenium").setLevel(Level.WARNING);
+    }
 
     public Hooks() {}
 
@@ -35,6 +42,11 @@ public class Hooks {
 
     /* Standard Hooks */
 
+    /**
+     * Loads in the config file that will be used for this test.
+     *
+     * @throws IOException when there is an issue reading from the config file.
+     */
     @Before(order = 0)
     public void loadConfig() throws IOException {
         String configFilepath = System.getProperty("config.filepath", null);
