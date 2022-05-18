@@ -3,6 +3,8 @@ package ca.empire.setup;
 import ca.empire.setup.configuration.models.CapabilityModel;
 import ca.empire.setup.configuration.models.PreferenceModel;
 import ca.empire.setup.configuration.models.ProfileModel;
+import ca.empire.util.TestEnvironment;
+import io.cucumber.java.Scenario;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.WebDriver;
@@ -10,49 +12,62 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.UUID;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-/**
- * Factory for supported web drivers.
- */
+/** Factory for supported web drivers. */
 public class DriverFactory {
     private static final HashMap<SupportedBrowsers, Boolean> driverSetups = new HashMap<>();
     private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(true);
-    private enum SupportedBrowsers {chrome, firefox, edge}
+
+    private enum SupportedBrowsers {
+        chrome,
+        firefox,
+        edge
+    }
+
+    private static final String factoryStartTime =
+            new SimpleDateFormat("yyyy-MM-dd-hh-mm-ss").format(new Date());
 
     static {
-        for (SupportedBrowsers browser : SupportedBrowsers.values())
-        {
+        for (SupportedBrowsers browser : SupportedBrowsers.values()) {
             driverSetups.put(browser, false);
         }
     }
 
     /**
      * Creates a WebDriver based on the provided driver profile.
+     *
      * @param driverProfile - The driver profile that will be used to create the WebDriver.
-     * @param downloadDir - The directory where downloaded files will be placed. Can be null if using a mobile device.
+     * @param downloadDir - The directory where downloaded files will be placed. Can be null if
+     *     using a mobile device.
      * @return - The WebDriver
      */
     public static WebDriver createDriver(ProfileModel driverProfile, File downloadDir) {
         String driverFramework = driverProfile.getDriverFramework();
 
         if (driverFramework == null) {
-            throw new NullPointerException("driverFramework must be specified in the ProfileModel.");
+            throw new NullPointerException(
+                    "driverFramework must be specified in the ProfileModel.");
         }
 
         if (driverFramework.equalsIgnoreCase("browserstack")) {
             return createBrowserStackDriver(driverProfile);
-        }
-        else if (driverFramework.equalsIgnoreCase("appium")) {
+        } else if (driverFramework.equalsIgnoreCase("appium")) {
             return createAppiumDriver(driverProfile);
-        }
-        else {
-            if (!driverFramework.equalsIgnoreCase("selenium"))
-            {
-                System.out.println(driverFramework + " is not an expected value. Defaulting to 'selenium'...");
+        } else {
+            if (!driverFramework.equalsIgnoreCase("selenium")) {
+                System.out.println(
+                        driverFramework + " is not an expected value. Defaulting to 'selenium'...");
             }
 
             return createDesktopBrowserDriver(driverProfile, downloadDir);
@@ -64,7 +79,39 @@ public class DriverFactory {
      * @return - The resulting BrowserStack driver.
      */
     private static WebDriver createBrowserStackDriver(ProfileModel driverProfile) {
-        throw new UnsupportedOperationException("firefox drivers have not been implemented yet.");
+        TestEnvironment environment = Hooks.getTestEnvironment();
+        String browserStackUrl = environment.get("BROWSERSTACK_AUTOMATE_URL");
+
+        DesiredCapabilities caps = new DesiredCapabilities();
+
+        caps.setCapability("build", "build-" + factoryStartTime);
+
+        for (CapabilityModel model : driverProfile.getCapabilities()) {
+            caps.setCapability(model.getName().toLowerCase(), model.getValue().toLowerCase());
+        }
+
+        // We want to have the final say on what the name will be
+        Scenario scenario = Hooks.getScenario();
+        String threadName =
+                scenario.getName().toLowerCase().replaceAll("\\s", "-")
+                        + "-line-"
+                        + scenario.getLine()
+                        + "-uuid-"
+                        + UUID.randomUUID();
+        caps.setCapability("name", threadName);
+
+        if (browserStackUrl == null || browserStackUrl.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "BROWSERSTACK_AUTOMATE_URL is either null or empty.");
+        }
+
+        try {
+            return new RemoteWebDriver(new URL(browserStackUrl), caps);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
     /**
@@ -80,7 +127,8 @@ public class DriverFactory {
      * @param downloadDir - The directory where downloaded files will be placed.
      * @return - The resulting WebDriver.
      */
-    private static WebDriver createDesktopBrowserDriver(ProfileModel driverProfile, File downloadDir) {
+    private static WebDriver createDesktopBrowserDriver(
+            ProfileModel driverProfile, File downloadDir) {
         HashMap<String, String> caps = new HashMap<>();
 
         for (CapabilityModel model : driverProfile.getCapabilities()) {
@@ -89,17 +137,20 @@ public class DriverFactory {
 
         String browserName = caps.get("browser.name");
 
-        if (browserName == null)
-        {
-            throw new NullPointerException("browser.name must not be null for the default selenium ProfileModel...");
+        if (browserName == null) {
+            throw new NullPointerException(
+                    "browser.name must not be null for the default selenium ProfileModel...");
         }
 
-        switch (SupportedBrowsers.valueOf(browserName))
-        {
-            case chrome: return createChromeDriver(driverProfile, downloadDir);
-            case firefox: return createFirefoxDriver(driverProfile, downloadDir);
-            case edge: return createEdgeDriver(driverProfile, downloadDir);
-            default: throw new IllegalArgumentException("");
+        switch (SupportedBrowsers.valueOf(browserName)) {
+            case chrome:
+                return createChromeDriver(driverProfile, downloadDir);
+            case firefox:
+                return createFirefoxDriver(driverProfile, downloadDir);
+            case edge:
+                return createEdgeDriver(driverProfile, downloadDir);
+            default:
+                throw new IllegalArgumentException("");
         }
     }
 
@@ -125,11 +176,11 @@ public class DriverFactory {
         Boolean isSetup = driverSetups.get(SupportedBrowsers.chrome);
         lock.readLock().unlock();
 
-        if (!isSetup)
-        {
+        if (!isSetup) {
             lock.writeLock().lock();
             System.out.println("Attempting to setup ChromeDriver...");
-            // Double check that it hasn't already been setup while waiting to acquire the write lock
+            // Double check that it hasn't already been setup while waiting to acquire the write
+            // lock
             if (!driverSetups.get(SupportedBrowsers.chrome)) {
                 try {
                     WebDriverManager manager = WebDriverManager.chromedriver();
@@ -141,13 +192,10 @@ public class DriverFactory {
                     manager.setup();
                     driverSetups.put(SupportedBrowsers.chrome, true);
                     System.out.println("ChromeDriver is done setup.");
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
-            }
-            else
-            {
+            } else {
                 System.out.println("ChromeDriver was setup while waiting for write lock.");
             }
 

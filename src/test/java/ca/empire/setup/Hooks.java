@@ -93,7 +93,7 @@ public class Hooks {
         if (envFilepath != null) {
             testEnvironment = new TestEnvironment(new File(envFilepath), false);
         } else {
-            testEnvironment = new TestEnvironment(false);
+            testEnvironment = new TestEnvironment(true);
         }
 
         testEnvironments.set(testEnvironment);
@@ -296,7 +296,8 @@ public class Hooks {
         testEnvironments.remove();
 
         if (drivers.get() != null) {
-            drivers.get().close();
+            getDriver().close();
+            getDriver().quit();
             drivers.remove();
         }
     }

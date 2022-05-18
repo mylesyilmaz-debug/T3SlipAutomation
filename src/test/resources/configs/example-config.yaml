@@ -26,3 +26,5 @@ profiles:
         value: iPhone 13
       - name: real_mobile
         value: true
+      - name: project
+        value: group-engagement
