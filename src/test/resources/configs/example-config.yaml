@@ -1,30 +1,28 @@
 environment:
   name: PORTALSTAGE
-  file: "./environments/stage.env"
+  filepath: "./environments/stage.env"
 
 profiles:
-  - name: "chrome-desktop"
-    driverFramework: "base"
+  - name: chrome-desktop
+    driverFramework: selenium
     capabilities:
-      - name: 'browser.name'
-        value: 'chrome'
-      - name: 'browser.version'
-        value: '99.0'
+      - name: browser.name
+        value: chrome
     arguments:
       - "--headless"
       - "--disable-gpu"
       - "--ignore-certificate-errors"
       - "--start-fullscreen"
     preferences:
-      - name: "plugins.always_open_pdf_externally"
+      - name: plugins.always_open_pdf_externally
         value: false
 
   - name: iphone-13-browserstack
     driverFramework: browserstack
     capabilities:
-      - name: "os_version"
-        value: "15"
-      - name: "device"
-        value: "iPhone 13"
-      - name: "real_mobile"
-        value: "true"
+      - name: os_version
+        value: 15
+      - name: device
+        value: iPhone 13
+      - name: real_mobile
+        value: true

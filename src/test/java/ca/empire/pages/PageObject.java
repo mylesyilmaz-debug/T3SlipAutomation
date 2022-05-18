@@ -113,11 +113,11 @@ public class PageObject {
      * Waits for an element to be visible before proceeding.
      *
      * @param element - The element to wait for.
-     * @param maxWait - The maximum wait time that we should wait for in ms.
+     * @param maxWait - The maximum wait time that we should wait for.
      * @param pollTime - The amount of time in seconds between each poll.
      */
     public void waitForVisible(WebElement element, int maxWait, int pollTime) {
-        new WebDriverWait(driver, Duration.ofMillis(maxWait))
+        new WebDriverWait(driver, maxWait)
                 .pollingEvery(Duration.ofSeconds(pollTime))
                 .ignoring(NoSuchElementException.class)
                 .until(ExpectedConditions.visibilityOf(element));
@@ -138,11 +138,11 @@ public class PageObject {
      * Waits for an element to be present in the DOM before proceeding.
      *
      * @param xPath - The xPath pointing to the element to wait for.
-     * @param maxWait - The maximum wait time that we should wait for in ms.
+     * @param maxWait - The maximum wait time that we should wait for.
      * @param pollTime - The amount of time in seconds between each poll.
      */
     public void waitForPresence(String xPath, int maxWait, int pollTime) {
-        new WebDriverWait(driver, Duration.ofMillis(maxWait))
+        new WebDriverWait(driver, maxWait)
                 .pollingEvery(Duration.ofSeconds(pollTime))
                 .ignoring(NoSuchElementException.class)
                 .until(ExpectedConditions.presenceOfElementLocated(By.xpath(xPath)));
@@ -163,11 +163,11 @@ public class PageObject {
      * Waits for an element to be detached from the DOM before proceeding.
      *
      * @param element - The element to wait for.
-     * @param maxWait - The maximum wait time that we should wait for in ms.
+     * @param maxWait - The maximum wait time that we should wait for.
      * @param pollTime - The amount of time in seconds between each poll.
      */
     public void waitForStale(WebElement element, int maxWait, int pollTime) {
-        new WebDriverWait(driver, Duration.ofMillis(maxWait))
+        new WebDriverWait(driver, maxWait)
                 .pollingEvery(Duration.ofSeconds(pollTime))
                 .ignoring(NoSuchElementException.class)
                 .until(ExpectedConditions.stalenessOf(element));
@@ -187,19 +187,24 @@ public class PageObject {
      * Waits for the element to be invisible.
      *
      * @param element - The element to wait for.
-     * @param maxWait - The maximum wait time that we should wait for in ms.
+     * @param maxWait - The maximum wait time that we should wait for.
      * @param pollTime - The amount of time in seconds between each poll.
      */
     public void waitForInvisible(WebElement element, int maxWait, int pollTime) {
-        new WebDriverWait(driver, Duration.ofMillis(maxWait))
+        new WebDriverWait(driver, maxWait)
                 .pollingEvery(Duration.ofSeconds(pollTime))
                 .ignoring(NoSuchElementException.class)
                 .until(ExpectedConditions.invisibilityOf(element));
     }
 
-    public void waitFor(int maxWait) {
+    /**
+     * This method will wait for a given amount of time before returning. This should be used very sparingly.
+     * If possible, you should be using a wait with an early exit condition instead of relying on static wait times.
+     * @param seconds - The time in seconds that we should wait for.
+     */
+    public void waitFor(int seconds) {
         try {
-            Thread.sleep(maxWait);
+            Thread.sleep(seconds);
         }
         catch (InterruptedException e) {
             e.printStackTrace();

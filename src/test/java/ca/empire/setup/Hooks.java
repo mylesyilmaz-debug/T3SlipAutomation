@@ -12,8 +12,8 @@ import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.UUID;
 
@@ -63,6 +63,7 @@ public class Hooks {
         }
 
         config.getConfigurationModel().setProfile(profileModel);
+        config.setParallel(Boolean.parseBoolean(System.getProperty("parallel", "false")));
     }
 
     /**
@@ -73,8 +74,7 @@ public class Hooks {
      */
     @Before(order = 1)
     public void loadEnvironment() throws IOException {
-        EnvironmentModel environmentModel =
-                getConfig().getConfigurationModel().getEnvironmentModel();
+        EnvironmentModel environmentModel = getConfig().getConfigurationModel().getEnvironment();
         String envFilepath = environmentModel.getFilepath();
         TestEnvironment testEnvironment;
 
@@ -97,24 +97,12 @@ public class Hooks {
         scenarios.set(scenario);
     }
 
-    /** Creates the driver that will be used for this test if it is not an API test */
-    @Before(value = "not @api", order = 3)
-    public void createDriver() {
-        setDriver(DriverFactory.createDriver(config.getConfigurationModel().getProfile()));
-
-        if (config.getParallel()) {
-            System.out.printf(
-                    "[Thread %2d] Running -> [Scenario: %s] - FAILED - (*_*)%n",
-                    Thread.currentThread().getId(), getScenario().getName());
-        }
-    }
-
     /**
      * Creates the download directory that will be used by one of the test runners
      *
      * @throws IOException if we are unable to create the required directories.
      */
-    @Before(order = 4)
+    @Before(order = 3)
     public void createDownloadDirectory() throws IOException {
         String separator = File.separator;
         String basePath =
@@ -133,6 +121,24 @@ public class Hooks {
         }
 
         downloadDirectories.set(directory);
+    }
+
+    /** Creates the driver that will be used for this test if it is not an API test */
+    @Before(value = "not @api", order = 4)
+    public void createDriver() {
+        setDriver(
+                DriverFactory.createDriver(
+                        config.getConfigurationModel().getProfile(), getDownloadDirectory()));
+
+        if (config.getParallel()) {
+            Scenario scenario = getScenario();
+            System.out.printf(
+                    "[Thread %2d] Running -> [Scenario: %s (%s:%d)]\n",
+                    Thread.currentThread().getId(),
+                    scenario.getName(),
+                    scenario.getUri().toString(),
+                    scenario.getLine());
+        }
     }
 
     /* Conditional Hooks */
@@ -166,7 +172,10 @@ public class Hooks {
         String jsScript;
         Status testStatus;
 
-        if (!config.getConfigurationModel().getProfile().getDriverFramework().equals("browserstack")) {
+        if (!config.getConfigurationModel()
+                .getProfile()
+                .getDriverFramework()
+                .equals("browserstack")) {
             return;
         }
 
@@ -227,9 +236,7 @@ public class Hooks {
                                 + "MB)");
             } else {
                 try {
-                    FileInputStream fio = new FileInputStream(downloadedFile);
-                    byte[] fileBytes = fio.readAllBytes();
-                    fio.close();
+                    byte[] fileBytes = Files.readAllBytes(downloadedFile.toPath());
 
                     scenario.attach(
                             fileBytes, "application/octet-stream", downloadedFile.getName());
@@ -261,10 +268,25 @@ public class Hooks {
     /** Cleans up all resources created for this thread */
     @After(order = 0)
     public void threadCleanup() {
+        if (config.getParallel()) {
+            Scenario scenario = getScenario();
+            System.out.printf(
+                    "[Thread %2d] Finished [Scenario: %s (%s:%d)] - %s\n",
+                    Thread.currentThread().getId(),
+                    scenario.getName(),
+                    scenario.getUri().toString(),
+                    scenario.getLine(),
+                    scenario.getStatus());
+        }
+
         scenarios.remove();
         downloadDirectories.remove();
         testEnvironments.remove();
-        drivers.remove();
+
+        if (drivers.get() != null) {
+            drivers.get().close();
+            drivers.remove();
+        }
     }
 
     /* Conditional Hooks */

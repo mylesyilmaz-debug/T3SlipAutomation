@@ -11,6 +11,7 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -32,9 +33,10 @@ public class DriverFactory {
     /**
      * Creates a WebDriver based on the provided driver profile.
      * @param driverProfile - The driver profile that will be used to create the WebDriver.
+     * @param downloadDir - The directory where downloaded files will be placed. Can be null if using a mobile device.
      * @return - The WebDriver
      */
-    public static WebDriver createDriver(ProfileModel driverProfile) {
+    public static WebDriver createDriver(ProfileModel driverProfile, File downloadDir) {
         String driverFramework = driverProfile.getDriverFramework();
 
         if (driverFramework == null) {
@@ -53,7 +55,7 @@ public class DriverFactory {
                 System.out.println(driverFramework + " is not an expected value. Defaulting to 'selenium'...");
             }
 
-            return createDesktopBrowserDriver(driverProfile);
+            return createDesktopBrowserDriver(driverProfile, downloadDir);
         }
     }
 
@@ -75,9 +77,10 @@ public class DriverFactory {
 
     /**
      * @param driverProfile - The driver profile that represents a standard desktop browser.
+     * @param downloadDir - The directory where downloaded files will be placed.
      * @return - The resulting WebDriver.
      */
-    private static WebDriver createDesktopBrowserDriver(ProfileModel driverProfile) {
+    private static WebDriver createDesktopBrowserDriver(ProfileModel driverProfile, File downloadDir) {
         HashMap<String, String> caps = new HashMap<>();
 
         for (CapabilityModel model : driverProfile.getCapabilities()) {
@@ -91,19 +94,21 @@ public class DriverFactory {
             throw new NullPointerException("browser.name must not be null for the default selenium ProfileModel...");
         }
 
-        return switch (SupportedBrowsers.valueOf(browserName))
-                {
-                    case chrome -> createChromeDriver(driverProfile);
-                    case firefox -> createFirefoxDriver(driverProfile);
-                    case edge -> createEdgeDriver(driverProfile);
-                };
+        switch (SupportedBrowsers.valueOf(browserName))
+        {
+            case chrome: return createChromeDriver(driverProfile, downloadDir);
+            case firefox: return createFirefoxDriver(driverProfile, downloadDir);
+            case edge: return createEdgeDriver(driverProfile, downloadDir);
+            default: throw new IllegalArgumentException("");
+        }
     }
 
     /**
      * @param driverProfile - The driver profile that represents a ChromeDriver.
+     * @param downloadDir - The directory where downloaded files will be placed.
      * @return - The resulting ChromeDriver.
      */
-    private static ChromeDriver createChromeDriver(ProfileModel driverProfile) {
+    private static ChromeDriver createChromeDriver(ProfileModel driverProfile, File downloadDir) {
         HashMap<String, String> caps = new HashMap<>();
         for (CapabilityModel model : driverProfile.getCapabilities()) {
             caps.put(model.getName().toLowerCase(), model.getValue().toLowerCase());
@@ -114,6 +119,8 @@ public class DriverFactory {
             prefs.put(model.getName().toLowerCase(), model.getValue());
         }
 
+        prefs.put("download.default_directory", downloadDir.getAbsolutePath());
+
         lock.readLock().lock();
         Boolean isSetup = driverSetups.get(SupportedBrowsers.chrome);
         lock.readLock().unlock();
@@ -121,7 +128,7 @@ public class DriverFactory {
         if (!isSetup)
         {
             lock.writeLock().lock();
-
+            System.out.println("Attempting to setup ChromeDriver...");
             // Double check that it hasn't already been setup while waiting to acquire the write lock
             if (!driverSetups.get(SupportedBrowsers.chrome)) {
                 try {
@@ -133,10 +140,15 @@ public class DriverFactory {
 
                     manager.setup();
                     driverSetups.put(SupportedBrowsers.chrome, true);
+                    System.out.println("ChromeDriver is done setup.");
                 }
                 catch (Exception e) {
                     e.printStackTrace();
                 }
+            }
+            else
+            {
+                System.out.println("ChromeDriver was setup while waiting for write lock.");
             }
 
             lock.writeLock().unlock();
@@ -153,17 +165,19 @@ public class DriverFactory {
 
     /**
      * @param driverProfile - The driver profile that represents a FirefoxDriver.
+     * @param downloadDir - The directory where downloaded files will be placed.
      * @return - The resulting FirefoxDriver.
      */
-    private static FirefoxDriver createFirefoxDriver(ProfileModel driverProfile) {
+    private static FirefoxDriver createFirefoxDriver(ProfileModel driverProfile, File downloadDir) {
         throw new UnsupportedOperationException("firefox drivers have not been implemented yet.");
     }
 
     /**
      * @param driverProfile - The driver profile that represents a EdgeDriver.
+     * @param downloadDir - The directory where downloaded files will be placed.
      * @return - The resulting EdgeDriver.
      */
-    private static EdgeDriver createEdgeDriver(ProfileModel driverProfile) {
+    private static EdgeDriver createEdgeDriver(ProfileModel driverProfile, File downloadDir) {
         throw new UnsupportedOperationException("edge drivers have not been implemented yet.");
     }
 }

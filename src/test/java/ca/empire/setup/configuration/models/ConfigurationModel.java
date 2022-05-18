@@ -5,26 +5,26 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 public class ConfigurationModel {
-    @JsonProperty private EnvironmentModel environmentModel;
+    @JsonProperty private EnvironmentModel environment;
     @JsonProperty private List<ProfileModel> profiles;
     private ProfileModel profile;
 
     public ConfigurationModel() {
-        setEnvironmentModel(null);
+        setEnvironment(null);
         setProfiles(null);
         setProfile(null);
     }
 
-    public EnvironmentModel getEnvironmentModel() {
-        return environmentModel;
+    public EnvironmentModel getEnvironment() {
+        return environment;
     }
 
     public List<ProfileModel> getProfiles() {
         return profiles;
     }
 
-    public ConfigurationModel setEnvironmentModel(EnvironmentModel environmentModel) {
-        this.environmentModel = environmentModel;
+    public ConfigurationModel setEnvironment(EnvironmentModel environment) {
+        this.environment = environment;
         return this;
     }
 
