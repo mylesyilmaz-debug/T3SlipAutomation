@@ -7,41 +7,41 @@
 .                                               |
 ├── .github                                     |
 │   ├── actions                                 |
-│   │   └── ...                                 |< Any composite actions should go here
+│   │   └── ...                                 |< Any composite actions should go here.
 │   └── workflows                               |
-│       └── ...                                 |< Any GitHub workflows should go here
+│       └── ...                                 |< Any GitHub workflows should go here.
 ├── environments                                |
-│   └── ...                                     |< Any .env files should go here
+│   └── ...                                     |< Any .env files should go here.
 └── src.test                                    |
     ├── java.ca.empire                          |
     │   ├── pages                               |
-    │   │   ├── PageObject.java                 |< The top level PageObject that all other pages should inherit from
-    │   │   └── ...                             |< Other page files should go here
+    │   │   ├── PageObject.java                 |< The top level PageObject that all other pages should inherit from.
+    │   │   └── ...                             |< Other page files should go here.
     │   ├── runner                              |
-    │   │   └── CucumberRunner.java             |< The Cucumber test runner used for debugging
+    │   │   └── CucumberRunner.java             |< The Cucumber test runner used for debugging.
     │   ├── setup                               |
-    │   │   ├── DriverFactory.java              |< Factory responsible for creating the drivers for a given profile
-    │   │   ├── Hooks.java                      |< The "main" class that holds the hooks and coordinates setup
+    │   │   ├── DriverFactory.java              |< Factory responsible for creating the drivers for a given profile.
+    │   │   ├── Hooks.java                      |< The "main" class that holds the hooks and coordinates setup.
     │   │   └── configuration                   |
-    │   │       ├── Config.java                 |< Creates models based on config file and hold config info
+    │   │       ├── Config.java                 |< Creates models based on config file and holds other config info.
     │   │       └── models                      |
-    │   │           ├── CapabilityModel.java    |< Serializeable model representing selenium capabilities
-    │   │           ├── ConfigurationModel.java |< Serializeable model representing the config file
-    │   │           ├── EnvironmentModel.java   |< Serializeable model representing the environment
-    │   │           ├── PreferenceModel.java    |< Serializeable model representing browser preferences
-    │   │           └── ProfileModel.java       |< Serializeable model representing a driver profile
+    │   │           ├── CapabilityModel.java    |< Serializeable model representing selenium capabilities.
+    │   │           ├── ConfigurationModel.java |< Serializeable model representing the config file.
+    │   │           ├── EnvironmentModel.java   |< Serializeable model representing the environment.
+    │   │           ├── PreferenceModel.java    |< Serializeable model representing browser preferences.
+    │   │           └── ProfileModel.java       |< Serializeable model representing a driver profile.
     │   ├── steps                               |
-    │   │   ├── GenericSteps.java               |< Generic steps that can be used regardless of test environment
-    │   │   ├── StepDefinition.java             |< The top level StepDefinition
-    │   │   └── ...                             |< Other step defs should go here
+    │   │   ├── GenericSteps.java               |< Generic steps that can be used regardless of test environment.
+    │   │   ├── StepDefinition.java             |< The top level StepDefinition.
+    │   │   └── ...                             |< Other step defs should go here.
     │   └── util                                |
-    │       ├── BatchAssertion.java             |< Used to assess multiple assertions at once
-    │       └── TestEnvironment.java            |< Stores environment variables and test data
+    │       ├── BatchAssertion.java             |< Used to assess multiple assertions at once.
+    │       └── TestEnvironment.java            |< Stores environment variables and test data.
     └── resources                               |
         ├── configs                             |
-        │   └── ...                             |< Config files should go here, but you can place them elsewhere
+        │   └── ...                             |< Config files should go here, but you can place them elsewhere if needed.
         └── feature                             |
-            └── ...                             |< Feature files must go here
+            └── ...                             |< Feature files must go here.
 ```
 
 ## Running Tests
