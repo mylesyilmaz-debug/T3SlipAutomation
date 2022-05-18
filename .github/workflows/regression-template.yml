@@ -1,0 +1,62 @@
+name: GAP Regression CI Workflow
+
+on:
+  workflow_dispatch:
+
+  # TODO: Setup workflow triggers such as "pull_request:" and "schedule:".
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checks out the repo to the local machine
+      - name: Checkout repo
+        uses: actions/checkout@v1
+
+      # Sets up the Java JDK
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+
+      # Generate the launch ref name that will be used in Report Portal
+      - name: Generate launch ref name
+        id: launchname
+        shell: bash
+        run: |
+          if [ "$GITHUB_HEAD_REF" != "" ]; then
+            echo ::set-output name=refname::"$GITHUB_HEAD_REF -> $GITHUB_BASE_REF"
+          else
+            echo ::set-output name=refname::"$GITHUB_REF_NAME"
+          fi
+
+      # Builds the reportportal.properties file that is needed for test metrics
+      - name: Build reportportal.properties
+        uses: ./.github/actions/report-portal-setup
+        with:
+          # TODO: enter project name and desired launch name
+          project: PROJECT_NAME
+          launch: LAUNCH_NAME [${{ steps.launchname.outputs.refname }}]
+          # TODO: create ReportPortal secrets in GitHub if needed, otherwise we can delete this step.
+          endpoint: ${{ secrets.RP_ENDPOINT }}
+          uuid: ${{ secrets.RP_UUID }}
+
+      # Run the regression tests
+      - name: Run regression tests
+        if: ${{ always() }}
+        # TODO: declare the environment.
+        # TODO: enter config tags, config filepath and config profile.
+        run: gradle cucumber -Dcucumber.filter.tags="..." -Dconfig.filepath="..." -Dconfig.profile="..." -Pthreads=4
+
+      # Send slack notification to report on the status of the actions
+      - name: Slack notification
+        if: ${{ always() }}
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+        env:
+          # TODO: setup slack webhook secret in GitHub.
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

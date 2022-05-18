@@ -1,0 +1,62 @@
+name: 'Create RP Properties'
+description: 'Creates the required reportportal.properties file that is needed for test metric reporting.'
+
+inputs:
+  project:
+    required: true
+    description:
+      'Equivalent to the property "rp.project".
+      The name of the project that the tests are being run for.
+      This should match the project name in ReportPortal'
+
+  launch:
+    required: true
+    description:
+      'Equivalent to the property "rp.launch".
+      The name of the launch that will be used in ReportPortal.
+      The launch number will automatically be appended to the end of end of the launch name.'
+
+  endpoint:
+    required: true
+    description:
+      'Equivalent to the property "rp.endpoint".
+      The url for the ReportPortal instance that the we want to send the test metrics to.'
+
+  uuid:
+    required: true
+    description:
+      'Equivalent to the property "rp.uuid"
+      The UUID of the ReportPortal user.'
+
+runs:
+  using: 'composite'
+  steps:
+
+    # Used to create the reportportal.properties file on Linux/Unix based machines by using bash
+    - name: 'Create reportportal.properties on Linux/Unix machine'
+      if: runner.os != 'Windows'
+      env:
+        RP_FILE: '$GITHUB_WORKSPACE/src/test/resources/reportportal.properties'
+      shell: 'bash'
+      run: |
+        echo "rp.project=${{ inputs.project }}" > ${{ env.RP_FILE }}
+        echo "rp.launch=${{ inputs.launch }}" >> ${{ env.RP_FILE }}
+        echo "rp.endpoint=${{ inputs.endpoint }}" >> ${{ env.RP_FILE }}
+        echo "rp.uuid=${{ inputs.uuid }}" >> ${{ env.RP_FILE }}
+
+        echo "reportportal.properties created at ${{ env.RP_FILE }}"
+        cat ${{ env.RP_FILE }}
+
+    # Used to create the reportportal.properties file on Windows machines by using powershell
+    - name: 'Create reportportal.properties on Windows machine'
+      if: runner.os == 'Windows'
+      env:
+        RP_FILE: '$GITHUB_WORKSPACE\src\test\resources\reportportal.properties'
+      shell: 'powershell'
+      run: |
+        "rp.project=${{ inputs.project }} `n
+        rp.launch=${{ inputs.launch }} `n
+        rp.endpoint=${{ inputs.endpoint }} `n
+        rp.uuid=${{ inputs.uuid }}" | Out-File -FilePath ${{ env.RP_FILE }}
+
+        Get-Content -Path ${{ env.RP_FILE }}
