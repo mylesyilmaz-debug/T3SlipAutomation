@@ -1,10 +1,12 @@
 plugins {
     id 'java'
+    id "com.github.onslip.gradle-one-jar" version "1.0.6"
 }
 
 group 'com.EmpireLife'
 version '1.0-SNAPSHOT'
 description 'Testing framework for running qat-'
+java.sourceCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
     flatDir {
@@ -15,10 +17,10 @@ repositories {
 }
 
 def cucumber_version = '7.3.4'
-def selenium_version = "4.1.4"
+def selenium_version = "3.141.59"
 def rest_assured_version = "4.5.0"
 def driver_manager_version = '5.0.2'
-def appium_version = '8.0.0'
+def appium_version = '7.6.0'
 def apache_poi_version = "5.0.0"
 def xml_apis_version = "1.4.01"
 def jackson_version = "2.13.3"
@@ -26,6 +28,12 @@ def jackson_version = "2.13.3"
 configurations.all {
     resolutionStrategy {
         force "xml-apis:xml-apis:${xml_apis_version}"
+    }
+}
+
+configurations {
+    cucumberRuntime {
+        extendsFrom testImplementation
     }
 }
 
@@ -71,12 +79,41 @@ dependencies {
     implementation group: 'com.jayway.jsonpath', name: 'json-path', version: '2.6.0'
     implementation group: 'xml-apis', name: 'xml-apis', version: xml_apis_version
 
-    testImplementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.36'
-    testImplementation group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.36'
-    testImplementation group: 'org.assertj', name: 'assertj-core', version: '3.22.0'
-    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.8.2'
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.36'
+    implementation group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.36'
+    implementation group: 'org.assertj', name: 'assertj-core', version: '3.22.0'
+    implementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.8.2'
+    implementation group: 'junit', name: 'junit', version: '4.13.2'
 }
 
-test {
-    useJUnitPlatform()
+
+task cucumber() {
+    dependsOn assemble, testClasses
+    doLast {
+        javaexec {
+            String threads = System.getProperty("threads", "1")
+            int parsedThreads = Integer.parseInt(threads)
+
+            if (parsedThreads < 1) {
+                throw new IllegalArgumentException("Illegal number of threads: " + parsedThreads)
+            }
+            else if (parsedThreads > 1) {
+                System.setProperty("parallel", "true")
+            }
+
+            systemProperty "cucumber.options", System.getProperty("cucumber.options")
+            systemProperty "cucumber.filter.tags", System.getProperty("cucumber.filter.tags")
+            systemProperty "config.filepath", System.getProperty("config.filepath")
+            systemProperty "config.profile", System.getProperty("config.profile")
+            systemProperty "parallel", System.getProperty("parallel", "false")
+
+            main = "io.cucumber.core.cli.Main"
+            classpath = configurations.cucumberRuntime + sourceSets.main.output + sourceSets.test.output
+            args = ['--plugin', 'pretty',
+                    '--plugin', 'com.epam.reportportal.cucumber.ScenarioReporter',
+                    '--glue', 'ca.empire',
+                    'src/test/resources/feature',
+                    '--threads', System.getProperty("threads", threads)]
+        }
+    }
 }
