@@ -31,6 +31,9 @@ build
 ### Temporary Files ###
 .temp/
 /.temp/
+src/test/java/ca/empire/pages/test/**
+src/test/java/ca/empire/steps/test/**
+src/test/resources/feature/test/**
 
 
 ### IntelliJ IDEA ###
