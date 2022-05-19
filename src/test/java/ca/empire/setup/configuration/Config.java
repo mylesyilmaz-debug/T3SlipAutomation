@@ -1,6 +1,7 @@
 package ca.empire.setup.configuration;
 
 import ca.empire.setup.configuration.models.Configuration;
+import ca.empire.setup.configuration.models.Mapping;
 import ca.empire.setup.configuration.models.Profile;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -8,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 /** Represents a YAML configuration file */
 public class Config {
@@ -50,7 +52,21 @@ public class Config {
 
         System.out.printf("Profile found!\nName: %s\nDescription: %s\n", profile.name, profile.description);
 
+        ArrayList<Mapping> systemProperties  = new ArrayList<>();
 
+        if (configurationModel.systemProperties != null && profile.systemProperties != null) {
+            systemProperties.addAll(configurationModel.systemProperties);
+            systemProperties.addAll(profile.systemProperties);
+
+        } else if (configurationModel.systemProperties != null) {
+            systemProperties.addAll(configurationModel.systemProperties);
+        } else if (profile.systemProperties != null) {
+            systemProperties.addAll(profile.systemProperties);
+        }
+
+        for (Mapping mapping : systemProperties) {
+            System.setProperty(mapping.key, mapping.value);
+        }
     }
 
     /**

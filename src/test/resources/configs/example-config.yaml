@@ -21,9 +21,6 @@ profiles:
       preferences:
         - key: plugins.always_open_pdf_externally
           value: false
-    systemProperties:
-      - key: webdriver.chrome.silentOutput
-        value: true
 
   - name: chrome-desktop
     description: "Chrome desktop driver running in headless mode."
