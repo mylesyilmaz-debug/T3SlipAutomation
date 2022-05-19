@@ -25,11 +25,12 @@
     │   │   └── configuration                   |
     │   │       ├── Config.java                 |< Creates models based on config file and holds other config info.
     │   │       └── models                      |
-    │   │           ├── CapabilityModel.java    |< Serializeable model representing selenium capabilities.
-    │   │           ├── ConfigurationModel.java |< Serializeable model representing the config file.
-    │   │           ├── EnvironmentModel.java   |< Serializeable model representing the environment.
-    │   │           ├── PreferenceModel.java    |< Serializeable model representing browser preferences.
-    │   │           └── ProfileModel.java       |< Serializeable model representing a driver profile.
+    │   │           ├── Model.java              |< Base interface for the configuration models
+    │   │           ├── Configuration.java      |< Serializeable model representing the config file.
+    │   │           ├── Driver.java             |< Serializeable model representing a driver configuration profile.
+    │   │           ├── Environment.java        |< Serializeable model representing the environment.
+    │   │           ├── Mapping.java            |< Serializeable model representing a generic key/value mapping.
+    │   │           └── Profile.java            |< Serializeable model representing a test profile.
     │   ├── steps                               |
     │   │   ├── GenericSteps.java               |< Generic steps that can be used regardless of test environment.
     │   │   ├── StepDefinition.java             |< The top level StepDefinition.
