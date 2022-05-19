@@ -45,6 +45,44 @@
             └── ...                             |< Feature files must go here.
 ```
 
+## Config Structure:
+
+ For a working example, refer to `src/test/resources/configs/example-config.yaml`
+```yaml
+environment:                  #< (OPTIONAL) The object containing information about the test environment.
+  filepath: <string>          #< The filepath that points to the .env file that will be used.
+  name: <string>              #< (OPTIONAL) The name of the environment that is being used.
+                              #
+profiles:                     #< The list of driver profiles that are available to us.
+  - name: <stirng>            #< The name of a driver profile.
+    description: <string>     #< (OPTIONAL) A description for the device profile. Mainly used for documentation.
+    systemProperties:         #< (OPTIONAL) The list of system properties that should be set for this driver profile.
+      - key: <string>         #< The key of the system property.
+        value: <string>       #< The value of the system property.
+      - ...                   #
+    driver:                   #< The object that outlines the specifics of the driver profile.
+      framework: <string>     #< What framework should be used to create the driver [selenium, browserstack, appium]
+      capabilities:           #< The list of capabilities that will be used when creating the driver.
+        - key: <string>       #< The key of the property.
+          value: <string>     #< The value of the property.
+        - ...                 #
+      preferences:            #< (OPTIONAL) The preferences that should be applied to the driver.
+        - key: <string>       #< The key of the preference.
+          value: <object>     #< The value of the preference.
+        - ...                 #
+      arguments:              #< (OPTIONAL) The list of launch arguments that should be used when starting the driver.
+        - <string>            #< A launch argument.
+        - ...                 #
+  - ...                       #
+                              #
+defaultProfile: <string>      #< (OPTIONAL) The default profile that should be used in the event that none are provided.
+                              #
+systemProperties:             #< (OPTIONAL) The list of system properties that should be set before running any tests. Will be overwritten by driver specific system properties.
+  - key: <string>             #< The key of the system property.
+    value: <string>           #< The value of the system property.
+  - ...                       #
+```
+
 ## Running Tests
 
  The following command can be used to run tests:
