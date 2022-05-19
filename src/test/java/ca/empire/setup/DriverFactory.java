@@ -1,8 +1,7 @@
 package ca.empire.setup;
 
-import ca.empire.setup.configuration.models.CapabilityModel;
-import ca.empire.setup.configuration.models.PreferenceModel;
-import ca.empire.setup.configuration.models.ProfileModel;
+import ca.empire.setup.configuration.models.Mapping;
+import ca.empire.setup.configuration.models.Driver;
 import ca.empire.util.TestEnvironment;
 import io.cucumber.java.Scenario;
 import io.github.bonigarcia.wdm.WebDriverManager;
@@ -47,38 +46,38 @@ public class DriverFactory {
     /**
      * Creates a WebDriver based on the provided driver profile.
      *
-     * @param driverProfile - The driver profile that will be used to create the WebDriver.
+     * @param driver - The driver profile that will be used to create the WebDriver.
      * @param downloadDir - The directory where downloaded files will be placed. Can be null if
      *     using a mobile device.
      * @return - The WebDriver
      */
-    public static WebDriver createDriver(ProfileModel driverProfile, File downloadDir) {
-        String driverFramework = driverProfile.getDriverFramework();
+    public static WebDriver createDriver(Driver driver, File downloadDir) {
+        String driverFramework = driver.framework;
 
         if (driverFramework == null) {
             throw new NullPointerException(
-                    "driverFramework must be specified in the ProfileModel.");
+                    "driverFramework must be specified in the DriverModel.");
         }
 
         if (driverFramework.equalsIgnoreCase("browserstack")) {
-            return createBrowserStackDriver(driverProfile);
+            return createBrowserStackDriver(driver);
         } else if (driverFramework.equalsIgnoreCase("appium")) {
-            return createAppiumDriver(driverProfile);
+            return createAppiumDriver(driver);
         } else {
             if (!driverFramework.equalsIgnoreCase("selenium")) {
                 System.out.println(
                         driverFramework + " is not an expected value. Defaulting to 'selenium'...");
             }
 
-            return createDesktopBrowserDriver(driverProfile, downloadDir);
+            return createDesktopBrowserDriver(driver, downloadDir);
         }
     }
 
     /**
-     * @param driverProfile - The driver profile that represents a BrowserStack driver.
+     * @param driver - The driver profile that represents a BrowserStack driver.
      * @return - The resulting BrowserStack driver.
      */
-    private static WebDriver createBrowserStackDriver(ProfileModel driverProfile) {
+    private static WebDriver createBrowserStackDriver(Driver driver) {
         TestEnvironment environment = Hooks.getTestEnvironment();
         String browserStackUrl = environment.get("BROWSERSTACK_AUTOMATE_URL");
 
@@ -86,8 +85,8 @@ public class DriverFactory {
 
         caps.setCapability("build", "build-" + factoryStartTime);
 
-        for (CapabilityModel model : driverProfile.getCapabilities()) {
-            caps.setCapability(model.getName().toLowerCase(), model.getValue().toLowerCase());
+        for (Mapping capability : driver.capabilities) {
+            caps.setCapability(capability.key.toLowerCase(), capability.key.toLowerCase());
         }
 
         // We want to have the final say on what the name will be
@@ -115,59 +114,59 @@ public class DriverFactory {
     }
 
     /**
-     * @param driverProfile - The driver profile that represents an Appium driver.
+     * @param driver - The driver profile that represents an Appium driver.
      * @return - The resulting AppiumDriver.
      */
-    private static WebDriver createAppiumDriver(ProfileModel driverProfile) {
+    private static WebDriver createAppiumDriver(Driver driver) {
         throw new UnsupportedOperationException("firefox drivers have not been implemented yet.");
     }
 
     /**
-     * @param driverProfile - The driver profile that represents a standard desktop browser.
+     * @param driver - The driver profile that represents a standard desktop browser.
      * @param downloadDir - The directory where downloaded files will be placed.
      * @return - The resulting WebDriver.
      */
     private static WebDriver createDesktopBrowserDriver(
-            ProfileModel driverProfile, File downloadDir) {
+            Driver driver, File downloadDir) {
         HashMap<String, String> caps = new HashMap<>();
 
-        for (CapabilityModel model : driverProfile.getCapabilities()) {
-            caps.put(model.getName().toLowerCase(), model.getValue().toLowerCase());
+        for (Mapping capability : driver.capabilities) {
+            caps.put(capability.key.toLowerCase(), capability.value.toLowerCase());
         }
 
         String browserName = caps.get("browser.name");
 
         if (browserName == null) {
             throw new NullPointerException(
-                    "browser.name must not be null for the default selenium ProfileModel...");
+                    "browser.name must not be null for the default selenium DriverModel...");
         }
 
         switch (SupportedBrowsers.valueOf(browserName)) {
             case chrome:
-                return createChromeDriver(driverProfile, downloadDir);
+                return createChromeDriver(driver, downloadDir);
             case firefox:
-                return createFirefoxDriver(driverProfile, downloadDir);
+                return createFirefoxDriver(driver, downloadDir);
             case edge:
-                return createEdgeDriver(driverProfile, downloadDir);
+                return createEdgeDriver(driver, downloadDir);
             default:
                 throw new IllegalArgumentException("");
         }
     }
 
     /**
-     * @param driverProfile - The driver profile that represents a ChromeDriver.
+     * @param driver - The driver profile that represents a ChromeDriver.
      * @param downloadDir - The directory where downloaded files will be placed.
      * @return - The resulting ChromeDriver.
      */
-    private static ChromeDriver createChromeDriver(ProfileModel driverProfile, File downloadDir) {
+    private static ChromeDriver createChromeDriver(Driver driver, File downloadDir) {
         HashMap<String, String> caps = new HashMap<>();
-        for (CapabilityModel model : driverProfile.getCapabilities()) {
-            caps.put(model.getName().toLowerCase(), model.getValue().toLowerCase());
+        for (Mapping capability : driver.capabilities) {
+            caps.put(capability.key.toLowerCase(), capability.value.toLowerCase());
         }
 
         HashMap<String, Object> prefs = new HashMap<>();
-        for (PreferenceModel model : driverProfile.getPreferences()) {
-            prefs.put(model.getName().toLowerCase(), model.getValue());
+        for (Mapping preference : driver.preferences) {
+            prefs.put(preference.key, preference.value);
         }
 
         prefs.put("download.default_directory", downloadDir.getAbsolutePath());
@@ -204,7 +203,7 @@ public class DriverFactory {
 
         ChromeOptions options = new ChromeOptions();
 
-        options.addArguments(driverProfile.getArguments());
+        options.addArguments(driver.arguments);
         options.setExperimentalOption("prefs", prefs);
         options.setPageLoadStrategy(PageLoadStrategy.NORMAL);
 
@@ -212,20 +211,20 @@ public class DriverFactory {
     }
 
     /**
-     * @param driverProfile - The driver profile that represents a FirefoxDriver.
+     * @param driver - The driver profile that represents a FirefoxDriver.
      * @param downloadDir - The directory where downloaded files will be placed.
      * @return - The resulting FirefoxDriver.
      */
-    private static FirefoxDriver createFirefoxDriver(ProfileModel driverProfile, File downloadDir) {
+    private static FirefoxDriver createFirefoxDriver(Driver driver, File downloadDir) {
         throw new UnsupportedOperationException("firefox drivers have not been implemented yet.");
     }
 
     /**
-     * @param driverProfile - The driver profile that represents a EdgeDriver.
+     * @param driver - The driver profile that represents a EdgeDriver.
      * @param downloadDir - The directory where downloaded files will be placed.
      * @return - The resulting EdgeDriver.
      */
-    private static EdgeDriver createEdgeDriver(ProfileModel driverProfile, File downloadDir) {
+    private static EdgeDriver createEdgeDriver(Driver driver, File downloadDir) {
         throw new UnsupportedOperationException("edge drivers have not been implemented yet.");
     }
 }
