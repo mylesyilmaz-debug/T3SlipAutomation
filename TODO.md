@@ -7,6 +7,6 @@
 - [x] Finalize configuration structure
 - [x] Verify ReportPortal implementation
 - [ ] Create more robust shutdown hooks
-- [ ] Implement Logging
+- [x] Implement Logging
 - [ ] Implement REST Interface
 - [x] Create README
