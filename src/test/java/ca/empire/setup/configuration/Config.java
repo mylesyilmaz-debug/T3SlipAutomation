@@ -5,6 +5,8 @@ import ca.empire.setup.configuration.models.Mapping;
 import ca.empire.setup.configuration.models.Profile;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -16,6 +18,8 @@ public class Config {
     private Configuration configurationModel;
     private Profile profile;
 
+    private static final Logger logger = LogManager.getLogger(Config.class);
+
     /**
      * Loads in the provided YAML file.
      *
@@ -23,6 +27,8 @@ public class Config {
      * @throws IOException if an IOException occurs when loading the provided YAML file.
      */
     public Config(@NotNull File configYaml, String profileName) throws IOException {
+        logger.traceEntry(() -> configYaml, () -> profileName);
+
         if (!configYaml.exists()) {
             throw new IllegalArgumentException(
                     "The provided file " + configYaml.getPath() + " does not exist.");
@@ -35,10 +41,6 @@ public class Config {
         configurationModel = mapper.readValue(configYaml, Configuration.class);
         profile = null;
 
-        if (profileName == null) {
-            profileName = "DEFAULT";
-        }
-
         for (Profile profile : configurationModel.profiles) {
             if (profile.name.equalsIgnoreCase(profileName)) {
                 this.profile = profile;
@@ -50,9 +52,9 @@ public class Config {
             throw new NullPointerException("No profile named " + profileName + " exists.");
         }
 
-        System.out.printf("Profile found!\nName: %s\nDescription: %s\n", profile.name, profile.description);
+        logger.info("Profile found! " + profile.name + " - " + profile.description);
 
-        ArrayList<Mapping> systemProperties  = new ArrayList<>();
+        ArrayList<Mapping> systemProperties = new ArrayList<>();
 
         if (configurationModel.systemProperties != null && profile.systemProperties != null) {
             systemProperties.addAll(configurationModel.systemProperties);
@@ -65,8 +67,11 @@ public class Config {
         }
 
         for (Mapping mapping : systemProperties) {
+            logger.info("Setting system property - " + mapping.key + ":" + mapping.value);
             System.setProperty(mapping.key, mapping.value);
         }
+
+        logger.traceExit();
     }
 
     /**
@@ -80,10 +85,14 @@ public class Config {
     }
 
     public Configuration getConfigurationModel() {
+        logger.traceEntry();
+        logger.traceExit(configurationModel);
         return configurationModel;
     }
 
     public Profile getProfile() {
+        logger.traceEntry();
+        logger.traceExit(profile);
         return profile;
     }
 }

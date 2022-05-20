@@ -8,6 +8,8 @@ import io.cucumber.java.After;
 import io.cucumber.java.Before;
 import io.cucumber.java.Scenario;
 import io.cucumber.java.Status;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 
@@ -23,21 +25,30 @@ public class Hooks {
     private static final ThreadLocal<DriverDecorator> driverDecorators = new ThreadLocal<>();
 
     private static final Config config;
+    private static final Logger logger = LogManager.getLogger(Hooks.class);
 
     static {
+        logger.traceEntry();
+
         // This should help clean up the logs.
-        java.util.logging.Logger.getLogger("org.openqa.selenium").setLevel(Level.WARNING);
+        java.util.logging.Logger.getLogger("org.openqa.selenium").setLevel(Level.OFF);
+        java.util.logging.Logger.getLogger("io.cucumber.java").setLevel(Level.OFF);
 
         String configFilepath = System.getProperty("config.filepath", null);
         String configProfile = System.getProperty("config.profile", null);
 
+        logger.info("config.filepath: " + configFilepath);
+        logger.info("config.profile: " + configProfile);
+
         if (configFilepath == null) {
+            logger.fatal("config.filepath was null.");
             throw new NullPointerException();
         }
 
         try {
             config = new Config(configFilepath, configProfile);
-        } catch (IOException e) {
+        } catch (Exception e) {
+            logger.fatal("Exception occurred when loading config:", e);
             throw new RuntimeException(e.getCause());
         }
 
@@ -52,12 +63,20 @@ public class Hooks {
         }
 
         if (profile == null) {
-            throw new IllegalArgumentException(
-                    configProfile + " is not declared in " + configFilepath);
+            IllegalArgumentException e =
+                    new IllegalArgumentException(
+                            configProfile + " is not declared in " + configFilepath);
+            logger.fatal(e);
+            throw e;
         }
+
+        logger.traceExit();
     }
 
-    public Hooks() {}
+    public Hooks() {
+        logger.traceEntry();
+        logger.traceExit();
+    }
 
     /*
     ====================================================================================================================
@@ -75,6 +94,8 @@ public class Hooks {
      */
     @Before(order = 0)
     public void loadEnvironment() throws IOException {
+        logger.traceEntry();
+
         Environment environment = getConfig().getConfigurationModel().environment;
         String envFilepath = environment.filepath;
         TestEnvironment testEnvironment;
@@ -86,6 +107,7 @@ public class Hooks {
         }
 
         testEnvironments.set(testEnvironment);
+        logger.traceExit();
     }
 
     /**
@@ -95,22 +117,27 @@ public class Hooks {
      */
     @Before(order = 1)
     public void setScenario(Scenario scenario) {
+        logger.traceEntry();
         scenarios.set(scenario);
+        logger.traceExit();
     }
 
     /** Creates the driver that will be used for this test if it is not an API test */
     @Before(value = "not @api", order = 2)
     public void createDriver() {
+        logger.traceEntry();
         setDriverDecorator(DriverFactory.createDriver(config.getProfile().driver));
 
         Scenario scenario = getScenario();
-        System.out.printf(
-                "[Thread %d (%s)] Running -> [Scenario: %s (%s:%d)]\n",
+        logger.info(
+                "[Thread {} ({})] Running -> [Scenario: {} ({}:{})]",
                 Thread.currentThread().getId(),
                 driverDecorators.get().getUuid(),
                 scenario.getName(),
                 scenario.getUri().toString(),
                 scenario.getLine());
+
+        logger.traceExit();
     }
 
     /* Conditional Hooks */
@@ -130,7 +157,9 @@ public class Hooks {
      */
     @After(order = 4)
     public void screenCapture(Scenario scenario) {
+        logger.traceEntry();
         /* ... */
+        logger.traceExit();
     }
 
     /**
@@ -140,6 +169,8 @@ public class Hooks {
      */
     @After(order = 3)
     public void markBrowserStackTestResult(Scenario scenario) {
+        logger.traceEntry();
+
         JavascriptExecutor jse;
         String jsScript;
         Status testStatus;
@@ -183,11 +214,14 @@ public class Hooks {
         }
 
         jse.executeScript(jsScript);
+        logger.traceExit();
     }
 
     /** Attaches downloaded files to the scenario and then deletes them */
     @After(order = 2)
     public void deleteDownloadDirectory() {
+        logger.traceEntry();
+
         Scenario scenario = getScenario();
         File downloadDir = getDownloadDirectory();
         File[] downloadedFiles = downloadDir.listFiles();
@@ -198,7 +232,7 @@ public class Hooks {
 
             if (size > maxSize) {
                 double convertedSize = size / Math.pow(2, 20); // convert to MB
-                System.out.println(
+                logger.warn(
                         downloadedFile.getAbsolutePath()
                                 + " exceeds max size ("
                                 + convertedSize
@@ -215,32 +249,39 @@ public class Hooks {
             }
 
             if (!downloadedFile.delete()) {
-                System.out.println("Unable to delete " + downloadedFile.getAbsolutePath());
+                logger.warn("Unable to delete " + downloadedFile.getAbsolutePath());
             } else {
-                System.out.println("Deleted " + downloadedFile.getAbsolutePath());
+                logger.info("Deleted " + downloadedFile.getAbsolutePath());
             }
         }
 
         if (!downloadDir.delete()) {
-            System.out.println("Unable to delete " + downloadDir.getAbsolutePath());
+            logger.warn("Unable to delete " + downloadDir.getAbsolutePath());
         } else {
-            System.out.println("Deleted " + downloadDir.getAbsolutePath());
+            logger.info("Deleted " + downloadDir.getAbsolutePath());
         }
+
+        logger.traceExit();
     }
 
     /** Clears the HAR file in the proxy */
     @After(order = 1)
     public void clearHarFile() {
+        logger.traceEntry();
         /* ... */
+        logger.traceExit();
     }
 
     /** Cleans up all resources created for this thread */
     @After(order = 0)
     public void threadCleanup() {
+        logger.traceEntry();
+
         Scenario scenario = getScenario();
-        System.out.printf(
-                "[Thread %2d] Finished [Scenario: %s (%s:%d)] - %s\n",
+        logger.info(
+                "[Thread {} ({})] Finished [Scenario: {} ({}:{})] - {}",
                 Thread.currentThread().getId(),
+                driverDecorators.get().getUuid(),
                 scenario.getName(),
                 scenario.getUri().toString(),
                 scenario.getLine(),
@@ -254,6 +295,8 @@ public class Hooks {
             getDriver().quit();
             driverDecorators.remove();
         }
+
+        logger.traceExit();
     }
 
     /* Conditional Hooks */
@@ -265,26 +308,40 @@ public class Hooks {
      */
 
     public static File getDownloadDirectory() {
-        return driverDecorators.get().getDownloadDirectory();
+        logger.traceEntry();
+        File dir = driverDecorators.get().getDownloadDirectory();
+        logger.traceExit(dir);
+        return dir;
     }
 
     public static WebDriver getDriver() {
-        return driverDecorators.get().getDriver();
+        logger.traceEntry();
+        WebDriver driver = driverDecorators.get().getDriver();
+        logger.traceExit(driver);
+        return driver;
     }
 
     public static TestEnvironment getTestEnvironment() {
+        logger.traceEntry();
+        logger.traceExit(testEnvironments.get());
         return testEnvironments.get();
     }
 
     public static Scenario getScenario() {
+        logger.traceEntry();
+        logger.traceExit(scenarios.get());
         return scenarios.get();
     }
 
     public Config getConfig() {
+        logger.traceEntry();
+        logger.traceExit(config);
         return config;
     }
 
     private static void setDriverDecorator(DriverDecorator driver) {
+        logger.traceEntry(() -> driver);
         driverDecorators.set(driver);
+        logger.traceExit();
     }
 }

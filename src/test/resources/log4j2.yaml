@@ -1,0 +1,47 @@
+# This is largely pulled form https://springframework.guru/log4j-2-configuration-using-yaml/ as I haven't worked with log4j before
+
+configutation:
+  name: Default
+  properties:
+    property:
+      name: log-path
+      value: "logs"
+
+  appenders:
+    console:
+      name: Console_Appender
+      target: SYSTEM_OUT
+      patternLayout:
+        pattern: "[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1}:%M - %msg%n"
+
+    file:
+      name: File_Appender
+      fileName: ${log-path}/logfile.log
+      patternLayout:
+        pattern: "[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1}:%M - %msg%n"
+
+    rollingFile:
+      - name: RollingFile_Appender
+        fileName: ${log-path}/rollingfile.log
+        filePattern: "logs/archive/rollingfile.log.%d{yyyy-MM-dd-hh-mm}.gz"
+        patternLayout:
+          pattern: "[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1}:%M - %msg%n"
+        policies:
+          sizeBasedTriggeringPolicy:
+            size: 8 KB
+        defaultRollOverStrategy:
+          max: 300
+
+  loggers:
+    logger:
+      - name: ca.empire
+        level: debug
+        appenderRef:
+          - ref: File_Appender
+            level: error
+          - ref: RollingFile_Appender
+            level: debug
+    root:
+      level: trace
+      appenderRef:
+        - ref: Console_Appender

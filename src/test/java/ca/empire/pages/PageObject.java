@@ -1,6 +1,8 @@
 package ca.empire.pages;
 
 import ca.empire.setup.Hooks;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.PageFactory;
@@ -14,6 +16,8 @@ import java.util.List;
 public class PageObject {
     protected WebDriver driver;
 
+    private static final Logger logger = LogManager.getLogger(PageObject.class);
+
     protected static final int DEFAULT_WAIT_TIME = 10;
     protected static final int DEFAULT_POLL_TIME = 1;
 
@@ -24,14 +28,18 @@ public class PageObject {
      */
 
     public PageObject() {
+        logger.traceEntry();
         driver = Hooks.getDriver();
         initFactory();
+        logger.traceExit();
     }
 
     /** Used to setup and initialize anything related to the PageFactory. */
     private void initFactory() {
+        logger.traceEntry();
         AjaxElementLocatorFactory ajaxFactory = new AjaxElementLocatorFactory(driver, 1);
         PageFactory.initElements(ajaxFactory, this);
+        logger.traceExit();
     }
 
     /*
@@ -41,7 +49,10 @@ public class PageObject {
      */
 
     private boolean checkJsExecutor() {
-        return JavascriptExecutor.class.isAssignableFrom(driver.getClass());
+        logger.traceEntry();
+        boolean isJsExecutor = JavascriptExecutor.class.isAssignableFrom(driver.getClass());
+        logger.traceExit(isJsExecutor);
+        return isJsExecutor;
     }
 
     /**
@@ -51,7 +62,10 @@ public class PageObject {
      * @return The XPath for the provided element (e.g. "/html/body/div/div/div[2]").
      */
     public String generateXPath(WebElement element) {
-        return generateXPathHelper(element, "");
+        logger.traceEntry(() -> element);
+        String xPath = generateXPathHelper(element, "");
+        logger.traceExit(xPath);
+        return xPath;
     }
 
     /**
@@ -63,6 +77,8 @@ public class PageObject {
      * @return The XPath for the provided element (e.g. "/html/body/div/div/div[2]").
      */
     private String generateXPathHelper(WebElement element, String currentPath) {
+        logger.traceEntry(() -> element, () -> currentPath);
+
         // adapted from
         // https://stackoverflow.com/questions/18510576/find-an-element-by-text-and-get-xpath-selenium-webdriver-junit
         int matchingTagCount;
@@ -73,7 +89,9 @@ public class PageObject {
         elementTag = element.getTagName();
 
         if (elementTag.equals("html")) {
-            return "/html[1]" + currentPath;
+            String finalPath = "/html[1]" + currentPath;
+            logger.traceExit(finalPath);
+            return finalPath;
         }
 
         parentElement = element.findElement(By.xpath(".."));
@@ -89,13 +107,17 @@ public class PageObject {
 
             if (siblingElement.equals(element)) {
                 String newPath = "/" + elementTag + "[" + matchingTagCount + "]" + currentPath;
-                return generateXPathHelper(parentElement, newPath);
+                newPath = generateXPathHelper(parentElement, newPath);
+                logger.traceExit(newPath);
+                return newPath;
             }
         }
 
         // We really shouldn't reach this, but I am putting this here so we can at least return a
         // relative XPath...
-        return "//" + elementTag + currentPath;
+        String relativePath = "//" + elementTag + currentPath;
+        logger.traceExit(relativePath);
+        return relativePath;
     }
 
     /**
@@ -106,6 +128,7 @@ public class PageObject {
      * @param element - The element to wait for.
      */
     public void waitForVisible(WebElement element) {
+        logger.traceEntry(() -> element);
         waitForVisible(element, DEFAULT_WAIT_TIME, DEFAULT_POLL_TIME);
     }
 
@@ -117,10 +140,12 @@ public class PageObject {
      * @param pollTime - The amount of time in seconds between each poll.
      */
     public void waitForVisible(WebElement element, int maxWait, int pollTime) {
+        logger.traceEntry(() -> element, () -> maxWait, () -> pollTime);
         new WebDriverWait(driver, maxWait)
                 .pollingEvery(Duration.ofSeconds(pollTime))
                 .ignoring(NoSuchElementException.class)
                 .until(ExpectedConditions.visibilityOf(element));
+        logger.traceExit();
     }
 
     /**
@@ -131,7 +156,9 @@ public class PageObject {
      * @param xPath - The xPath pointing to the element to wait for.
      */
     public void waitForPresence(String xPath) {
+        logger.traceEntry(() -> xPath);
         waitForPresence(xPath, DEFAULT_WAIT_TIME, DEFAULT_POLL_TIME);
+        logger.traceExit();
     }
 
     /**
@@ -142,10 +169,12 @@ public class PageObject {
      * @param pollTime - The amount of time in seconds between each poll.
      */
     public void waitForPresence(String xPath, int maxWait, int pollTime) {
+        logger.traceEntry(() -> xPath, () -> maxWait, () -> pollTime);
         new WebDriverWait(driver, maxWait)
                 .pollingEvery(Duration.ofSeconds(pollTime))
                 .ignoring(NoSuchElementException.class)
                 .until(ExpectedConditions.presenceOfElementLocated(By.xpath(xPath)));
+        logger.traceExit();
     }
 
     /**
@@ -156,7 +185,9 @@ public class PageObject {
      * @param element - The element to wait for.
      */
     public void waitForStale(WebElement element) {
+        logger.traceEntry(() -> element);
         waitForStale(element, DEFAULT_WAIT_TIME, DEFAULT_POLL_TIME);
+        logger.traceExit();
     }
 
     /**
@@ -167,10 +198,12 @@ public class PageObject {
      * @param pollTime - The amount of time in seconds between each poll.
      */
     public void waitForStale(WebElement element, int maxWait, int pollTime) {
+        logger.traceEntry(() -> element, () -> maxWait, () -> pollTime);
         new WebDriverWait(driver, maxWait)
                 .pollingEvery(Duration.ofSeconds(pollTime))
                 .ignoring(NoSuchElementException.class)
                 .until(ExpectedConditions.stalenessOf(element));
+        logger.traceExit();
     }
 
     /**
@@ -180,7 +213,9 @@ public class PageObject {
      * @param element - The element to wait for.
      */
     public void waitForInvisible(WebElement element) {
+        logger.traceEntry(() -> element);
         waitForInvisible(element, DEFAULT_WAIT_TIME, DEFAULT_POLL_TIME);
+        logger.traceExit();
     }
 
     /**
@@ -191,24 +226,30 @@ public class PageObject {
      * @param pollTime - The amount of time in seconds between each poll.
      */
     public void waitForInvisible(WebElement element, int maxWait, int pollTime) {
+        logger.traceEntry(() -> element, () -> maxWait, () -> pollTime);
         new WebDriverWait(driver, maxWait)
                 .pollingEvery(Duration.ofSeconds(pollTime))
                 .ignoring(NoSuchElementException.class)
                 .until(ExpectedConditions.invisibilityOf(element));
+        logger.traceExit();
     }
 
     /**
-     * This method will wait for a given amount of time before returning. This should be used very sparingly.
-     * If possible, you should be using a wait with an early exit condition instead of relying on static wait times.
+     * This method will wait for a given amount of time before returning. This should be used very
+     * sparingly. If possible, you should be using a wait with an early exit condition instead of
+     * relying on static wait times.
+     *
      * @param seconds - The time in seconds that we should wait for.
      */
     public void waitFor(int seconds) {
+        logger.traceEntry(() -> seconds);
         try {
             Thread.sleep(seconds);
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException e) {
+            logger.error(e);
             e.printStackTrace();
         }
+        logger.traceExit();
     }
 
     /**
@@ -220,7 +261,10 @@ public class PageObject {
      * @return The first matching element on the current page.
      */
     public WebElement findElement(By by) {
-        return driver.findElement(by);
+        logger.traceEntry(() -> by);
+        WebElement element = driver.findElement(by);
+        logger.traceExit();
+        return element;
     }
 
     /**
@@ -231,7 +275,10 @@ public class PageObject {
      * @return - A list of all WebElements, or an empty list if nothing matches
      */
     public List<WebElement> findElements(By by) {
-        return driver.findElements(by);
+        logger.traceEntry(() -> by);
+        List<WebElement> elements = driver.findElements(by);
+        logger.traceExit();
+        return elements;
     }
 
     /**
@@ -242,6 +289,7 @@ public class PageObject {
      * @param element - The element to scroll to.
      */
     public void scrollTo(WebElement element) {
+        logger.traceEntry(() -> element);
         if (checkJsExecutor()) {
             int halfHeight, windowHeight;
 
@@ -254,6 +302,7 @@ public class PageObject {
 
         new Actions(driver).moveToElement(element).perform();
         waitFor(500);
+        logger.traceExit();
     }
 
     /**
@@ -270,19 +319,18 @@ public class PageObject {
      *     (0, 0)).
      */
     public void scrollTo(WebElement element, int yOffset) {
-        int targetY;
+        logger.traceEntry(() -> element, () -> yOffset);
 
         if (!checkJsExecutor()) {
-            System.out.println(
-                    "WARNING: This method should only be used if the provided driver is capable of "
+            logger.warn(
+                    "This method should only be used if the provided driver is capable of "
                             + "executing JavaScript...");
-            scrollTo(
-                    element); // kind of a cyclical dependency here, but this is better then
-                              // throwing an error
+            scrollTo(element); // kind of a cyclical dependency here, but this is better then
+            // throwing an error
             return;
         }
 
-        targetY = element.getLocation().y + yOffset;
+        int targetY = element.getLocation().y + yOffset;
 
         ((JavascriptExecutor) driver)
                 .executeScript(
@@ -291,6 +339,7 @@ public class PageObject {
                         "smooth");
 
         waitFor(500);
+        logger.traceExit();
     }
 
     /**
@@ -300,6 +349,7 @@ public class PageObject {
      * @param element - The element to click on.
      */
     public void click(WebElement element) {
+        logger.traceEntry(() -> element);
         scrollTo(element);
 
         if (!checkJsExecutor()) {
@@ -308,6 +358,7 @@ public class PageObject {
         }
 
         ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
+        logger.traceExit();
     }
 
     /**
@@ -316,8 +367,10 @@ public class PageObject {
      * @param element - The element to double click.
      */
     public void doubleClick(WebElement element) {
+        logger.traceEntry(() -> element);
         scrollTo(element);
         new Actions(driver).doubleClick(element).perform();
+        logger.traceExit();
     }
 
     /**
@@ -327,6 +380,7 @@ public class PageObject {
      * @param text - The text to type in.
      */
     public void typeIn(WebElement element, String text, boolean clearText) {
+        logger.traceEntry(() -> element, () -> text, () -> clearText);
         click(element);
 
         if (clearText) {
@@ -334,6 +388,7 @@ public class PageObject {
         }
 
         element.sendKeys(text);
+        logger.traceExit();
     }
 
     /**
@@ -343,7 +398,10 @@ public class PageObject {
      * @return The text from the element.
      */
     public String getText(WebElement element) {
-        return element.getText();
+        logger.traceEntry(() -> element);
+        String text = element.getText();
+        logger.traceExit(text);
+        return text;
     }
 
     /**
@@ -354,6 +412,9 @@ public class PageObject {
      * @return The current CSS value of the given property.
      */
     public String getCssValue(WebElement element, String cssProperty) {
-        return element.getCssValue(cssProperty);
+        logger.traceEntry(() -> element, () -> cssProperty);
+        String value = element.getCssValue(cssProperty);
+        logger.traceExit(value);
+        return value;
     }
 }
