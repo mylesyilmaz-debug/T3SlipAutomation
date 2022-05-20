@@ -5,7 +5,7 @@
     - [ ] Firefox
     - [ ] Edge
 - [x] Finalize configuration structure
-- [ ] Verify ReportPortal implementation
+- [x] Verify ReportPortal implementation
 - [ ] Create more robust shutdown hooks
 - [ ] Implement Logging
 - [ ] Implement REST Interface

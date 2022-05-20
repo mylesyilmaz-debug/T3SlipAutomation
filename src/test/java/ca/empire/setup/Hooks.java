@@ -15,14 +15,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
-import java.util.UUID;
 import java.util.logging.Level;
 
 public class Hooks {
     private static final ThreadLocal<Scenario> scenarios = new ThreadLocal<>();
-    private static final ThreadLocal<File> downloadDirectories = new ThreadLocal<>();
     private static final ThreadLocal<TestEnvironment> testEnvironments = new ThreadLocal<>();
-    private static final ThreadLocal<WebDriver> drivers = new ThreadLocal<>();
+    private static final ThreadLocal<DriverDecorator> driverDecorators = new ThreadLocal<>();
 
     private static final Config config;
 
@@ -75,7 +73,7 @@ public class Hooks {
      *
      * @throws IOException when there was an issue loading in the provided .env file.
      */
-    @Before(order = 1)
+    @Before(order = 0)
     public void loadEnvironment() throws IOException {
         Environment environment = getConfig().getConfigurationModel().environment;
         String envFilepath = environment.filepath;
@@ -95,46 +93,21 @@ public class Hooks {
      *
      * @param scenario - The cucumber scenario for this test
      */
-    @Before(order = 2)
+    @Before(order = 1)
     public void setScenario(Scenario scenario) {
         scenarios.set(scenario);
     }
 
-    /**
-     * Creates the download directory that will be used by one of the test runners
-     *
-     * @throws IOException if we are unable to create the required directories.
-     */
-    @Before(order = 3)
-    public void createDownloadDirectory() throws IOException {
-        String separator = File.separator;
-        String basePath =
-                System.getProperty("user.dir")
-                        + separator
-                        + ".temp"
-                        + separator
-                        + "downloads"
-                        + separator;
-
-        File directory = new File(basePath + UUID.randomUUID().toString());
-
-        if (!directory.mkdirs()) {
-            throw new IOException(
-                    "Unable to create download directory " + directory.getAbsolutePath());
-        }
-
-        downloadDirectories.set(directory);
-    }
-
     /** Creates the driver that will be used for this test if it is not an API test */
-    @Before(value = "not @api", order = 4)
+    @Before(value = "not @api", order = 2)
     public void createDriver() {
-        setDriver(DriverFactory.createDriver(config.getProfile().driver, getDownloadDirectory()));
+        setDriverDecorator(DriverFactory.createDriver(config.getProfile().driver));
 
         Scenario scenario = getScenario();
         System.out.printf(
-                "[Thread %2d] Running -> [Scenario: %s (%s:%d)]\n",
+                "[Thread %d (%s)] Running -> [Scenario: %s (%s:%d)]\n",
                 Thread.currentThread().getId(),
+                driverDecorators.get().getUuid(),
                 scenario.getName(),
                 scenario.getUri().toString(),
                 scenario.getLine());
@@ -274,13 +247,12 @@ public class Hooks {
                 scenario.getStatus());
 
         scenarios.remove();
-        downloadDirectories.remove();
         testEnvironments.remove();
 
-        if (drivers.get() != null) {
+        if (driverDecorators.get() != null) {
             getDriver().close();
             getDriver().quit();
-            drivers.remove();
+            driverDecorators.remove();
         }
     }
 
@@ -293,11 +265,11 @@ public class Hooks {
      */
 
     public static File getDownloadDirectory() {
-        return downloadDirectories.get();
+        return driverDecorators.get().getDownloadDirectory();
     }
 
     public static WebDriver getDriver() {
-        return drivers.get();
+        return driverDecorators.get().getDriver();
     }
 
     public static TestEnvironment getTestEnvironment() {
@@ -312,7 +284,7 @@ public class Hooks {
         return config;
     }
 
-    private static void setDriver(WebDriver driver) {
-        drivers.set(driver);
+    private static void setDriverDecorator(DriverDecorator driver) {
+        driverDecorators.set(driver);
     }
 }
