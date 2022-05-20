@@ -10,7 +10,7 @@ import org.apache.logging.log4j.Logger;
  * any site or project.
  */
 public class GenericSteps extends StepDefinition {
-    private static final Logger logger = LogManager.getLogger(StepDefinition.class);
+    private static final Logger logger = LogManager.getLogger(GenericSteps.class);
 
     public GenericSteps() {
         super();

@@ -41,15 +41,28 @@ public class Config {
         configurationModel = mapper.readValue(configYaml, Configuration.class);
         profile = null;
 
+        String derivedProfileName =
+                profileName == null || profileName.isEmpty()
+                        ? configurationModel.defaultProfile
+                        : profileName;
+
+        if (derivedProfileName == null || derivedProfileName.isEmpty()) {
+            IllegalArgumentException e =
+                    new IllegalArgumentException(
+                            "No profile was provided and the defaultProfile is null or empty.");
+            logger.fatal(e);
+            throw e;
+        }
+
         for (Profile profile : configurationModel.profiles) {
-            if (profile.name.equalsIgnoreCase(profileName)) {
+            if (profile.name.equalsIgnoreCase(derivedProfileName)) {
                 this.profile = profile;
                 break;
             }
         }
 
         if (profile == null) {
-            throw new NullPointerException("No profile named " + profileName + " exists.");
+            throw new NullPointerException("No profile named " + derivedProfileName + " exists.");
         }
 
         logger.info("Profile found! " + profile.name + " - " + profile.description);

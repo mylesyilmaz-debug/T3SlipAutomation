@@ -30,7 +30,7 @@ public class DriverFactory {
     private static final HashMap<SupportedBrowsers, Boolean> driverSetups = new HashMap<>();
     private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(true);
 
-    private static final Logger logger = LogManager.getLogger(DriverDecorator.class);
+    private static final Logger logger = LogManager.getLogger(DriverFactory.class);
 
     private enum SupportedBrowsers {
         chrome,
@@ -103,7 +103,7 @@ public class DriverFactory {
         caps.setCapability("build", "build-" + factoryStartTime);
 
         for (Mapping capability : driver.capabilities) {
-            logger.info("Setting capability - " + capability.key + ":" + capability.value);
+            logger.debug("Setting capability - " + capability.key + ":" + capability.value);
             caps.setCapability(capability.key, capability.value);
         }
 
@@ -202,13 +202,13 @@ public class DriverFactory {
 
         HashMap<String, String> caps = new HashMap<>();
         for (Mapping capability : driverProfile.capabilities) {
-            logger.info("Setting capability - " + capability.key + ":" + capability.value);
+            logger.debug("Setting capability - " + capability.key + ":" + capability.value);
             caps.put(capability.key.toLowerCase(), capability.value.toLowerCase());
         }
 
         HashMap<String, Object> prefs = new HashMap<>();
         for (Mapping preference : driverProfile.preferences) {
-            logger.info("Setting preference - " + preference.key + ":" + preference.value);
+            logger.debug("Setting preference - " + preference.key + ":" + preference.value);
             prefs.put(preference.key, preference.value);
         }
 

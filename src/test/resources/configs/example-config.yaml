@@ -4,7 +4,7 @@ environment:
   name: EXAMPLE
   filepath: "./environments/examples/example.env"
 
-defaultProfile: chrome-desktop-headless
+defaultProfile: chrome-desktop
 
 # TODO: configure desired device profiles
 profiles:

@@ -88,11 +88,10 @@ dependencies {
 test {
     systemProperty "cucumber.options", System.getProperty("cucumber.options")
     systemProperty "cucumber.filter.tags", System.getProperty("cucumber.filter.tags")
-    systemProperty "config.filepath", System.getProperty("config.filepath")
-    systemProperty "config.profile", System.getProperty("config.profile")
-
-    System.getProperty("parallel", "false")
-    System.getProperty("threads", "1")
+    systemProperty "config.filepath", System.getProperty("config.filepath", "")
+    systemProperty "config.profile", System.getProperty("config.profile", "")
+    systemProperty "parallel", System.getProperty("parallel", "false")
+    systemProperty "threads", System.getProperty("threads", "1")
 }
 
 task cucumber() {
@@ -111,8 +110,8 @@ task cucumber() {
 
             systemProperty "cucumber.options", System.getProperty("cucumber.options")
             systemProperty "cucumber.filter.tags", System.getProperty("cucumber.filter.tags")
-            systemProperty "config.filepath", System.getProperty("config.filepath")
-            systemProperty "config.profile", System.getProperty("config.profile")
+            systemProperty "config.filepath", System.getProperty("config.filepath", "")
+            systemProperty "config.profile", System.getProperty("config.profile", "")
             systemProperty "parallel", System.getProperty("parallel", "false")
 
             main = "io.cucumber.core.cli.Main"

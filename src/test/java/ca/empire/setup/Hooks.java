@@ -2,7 +2,6 @@ package ca.empire.setup;
 
 import ca.empire.setup.configuration.Config;
 import ca.empire.setup.configuration.models.Environment;
-import ca.empire.setup.configuration.models.Profile;
 import ca.empire.util.TestEnvironment;
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
@@ -16,7 +15,6 @@ import org.openqa.selenium.WebDriver;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.List;
 import java.util.logging.Level;
 
 public class Hooks {
@@ -34,15 +32,15 @@ public class Hooks {
         java.util.logging.Logger.getLogger("org.openqa.selenium").setLevel(Level.OFF);
         java.util.logging.Logger.getLogger("io.cucumber.java").setLevel(Level.OFF);
 
-        String configFilepath = System.getProperty("config.filepath", null);
-        String configProfile = System.getProperty("config.profile", null);
+        String configFilepath = System.getProperty("config.filepath", "");
+        String configProfile = System.getProperty("config.profile", "");
 
         logger.info("config.filepath: " + configFilepath);
         logger.info("config.profile: " + configProfile);
 
-        if (configFilepath == null) {
-            logger.fatal("config.filepath was null.");
-            throw new NullPointerException();
+        if (configFilepath.isEmpty()) {
+            logger.fatal("config.filepath was empty.");
+            throw new IllegalArgumentException();
         }
 
         try {
@@ -50,24 +48,6 @@ public class Hooks {
         } catch (Exception e) {
             logger.fatal("Exception occurred when loading config:", e);
             throw new RuntimeException(e.getCause());
-        }
-
-        Profile profile = null;
-        List<Profile> profileList = config.getConfigurationModel().profiles;
-
-        for (Profile model : profileList) {
-            if (model.name.equals(configProfile)) {
-                profile = model;
-                break;
-            }
-        }
-
-        if (profile == null) {
-            IllegalArgumentException e =
-                    new IllegalArgumentException(
-                            configProfile + " is not declared in " + configFilepath);
-            logger.fatal(e);
-            throw e;
         }
 
         logger.traceExit();
