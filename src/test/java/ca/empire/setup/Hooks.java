@@ -1,8 +1,8 @@
 package ca.empire.setup;
 
 import ca.empire.setup.configuration.Config;
-import ca.empire.setup.configuration.models.EnvironmentModel;
-import ca.empire.setup.configuration.models.ProfileModel;
+import ca.empire.setup.configuration.models.Environment;
+import ca.empire.setup.configuration.models.Profile;
 import ca.empire.util.TestEnvironment;
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
@@ -15,21 +15,46 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
-import java.util.UUID;
 import java.util.logging.Level;
 
 public class Hooks {
     private static final ThreadLocal<Scenario> scenarios = new ThreadLocal<>();
-    private static final ThreadLocal<File> downloadDirectories = new ThreadLocal<>();
     private static final ThreadLocal<TestEnvironment> testEnvironments = new ThreadLocal<>();
-    private static final ThreadLocal<WebDriver> drivers = new ThreadLocal<>();
+    private static final ThreadLocal<DriverDecorator> driverDecorators = new ThreadLocal<>();
 
-    private Config config;
+    private static final Config config;
 
     static {
         // This should help clean up the logs.
-        System.setProperty("webdriver.chrome.silentOutput", "true");
         java.util.logging.Logger.getLogger("org.openqa.selenium").setLevel(Level.WARNING);
+
+        String configFilepath = System.getProperty("config.filepath", null);
+        String configProfile = System.getProperty("config.profile", null);
+
+        if (configFilepath == null) {
+            throw new NullPointerException();
+        }
+
+        try {
+            config = new Config(configFilepath, configProfile);
+        } catch (IOException e) {
+            throw new RuntimeException(e.getCause());
+        }
+
+        Profile profile = null;
+        List<Profile> profileList = config.getConfigurationModel().profiles;
+
+        for (Profile model : profileList) {
+            if (model.name.equals(configProfile)) {
+                profile = model;
+                break;
+            }
+        }
+
+        if (profile == null) {
+            throw new IllegalArgumentException(
+                    configProfile + " is not declared in " + configFilepath);
+        }
     }
 
     public Hooks() {}
@@ -43,51 +68,15 @@ public class Hooks {
     /* Standard Hooks */
 
     /**
-     * Loads in the config file that will be used for this test.
-     *
-     * @throws IOException when there is an issue reading from the config file.
-     */
-    @Before(order = 0)
-    public void loadConfig() throws IOException {
-        String configFilepath = System.getProperty("config.filepath", null);
-        String configProfile = System.getProperty("config.profile", null);
-
-        if (configFilepath == null) {
-            throw new NullPointerException();
-        } else if (configProfile == null) {
-            throw new NullPointerException();
-        }
-
-        config = new Config(configFilepath);
-        ProfileModel profileModel = null;
-        List<ProfileModel> profileModelList = config.getConfigurationModel().getProfiles();
-
-        for (ProfileModel model : profileModelList) {
-            if (model.getName().equals(configProfile)) {
-                profileModel = model;
-                break;
-            }
-        }
-
-        if (profileModel == null) {
-            throw new IllegalArgumentException(
-                    configProfile + " is not declared in " + configFilepath);
-        }
-
-        config.getConfigurationModel().setProfile(profileModel);
-        config.setParallel(Boolean.parseBoolean(System.getProperty("parallel", "false")));
-    }
-
-    /**
      * Creates the test environment that will be used for this test. If a .env file is declared in
      * the config file, then that will be used as the starting state for the environment.
      *
      * @throws IOException when there was an issue loading in the provided .env file.
      */
-    @Before(order = 1)
+    @Before(order = 0)
     public void loadEnvironment() throws IOException {
-        EnvironmentModel environmentModel = getConfig().getConfigurationModel().getEnvironment();
-        String envFilepath = environmentModel.getFilepath();
+        Environment environment = getConfig().getConfigurationModel().environment;
+        String envFilepath = environment.filepath;
         TestEnvironment testEnvironment;
 
         if (envFilepath != null) {
@@ -104,53 +93,24 @@ public class Hooks {
      *
      * @param scenario - The cucumber scenario for this test
      */
-    @Before(order = 2)
+    @Before(order = 1)
     public void setScenario(Scenario scenario) {
         scenarios.set(scenario);
     }
 
-    /**
-     * Creates the download directory that will be used by one of the test runners
-     *
-     * @throws IOException if we are unable to create the required directories.
-     */
-    @Before(order = 3)
-    public void createDownloadDirectory() throws IOException {
-        String separator = File.separator;
-        String basePath =
-                System.getProperty("user.dir")
-                        + separator
-                        + ".temp"
-                        + separator
-                        + "downloads"
-                        + separator;
-
-        File directory = new File(basePath + UUID.randomUUID().toString());
-
-        if (!directory.mkdirs()) {
-            throw new IOException(
-                    "Unable to create download directory " + directory.getAbsolutePath());
-        }
-
-        downloadDirectories.set(directory);
-    }
-
     /** Creates the driver that will be used for this test if it is not an API test */
-    @Before(value = "not @api", order = 4)
+    @Before(value = "not @api", order = 2)
     public void createDriver() {
-        setDriver(
-                DriverFactory.createDriver(
-                        config.getConfigurationModel().getProfile(), getDownloadDirectory()));
+        setDriverDecorator(DriverFactory.createDriver(config.getProfile().driver));
 
-        if (config.getParallel()) {
-            Scenario scenario = getScenario();
-            System.out.printf(
-                    "[Thread %2d] Running -> [Scenario: %s (%s:%d)]\n",
-                    Thread.currentThread().getId(),
-                    scenario.getName(),
-                    scenario.getUri().toString(),
-                    scenario.getLine());
-        }
+        Scenario scenario = getScenario();
+        System.out.printf(
+                "[Thread %d (%s)] Running -> [Scenario: %s (%s:%d)]\n",
+                Thread.currentThread().getId(),
+                driverDecorators.get().getUuid(),
+                scenario.getName(),
+                scenario.getUri().toString(),
+                scenario.getLine());
     }
 
     /* Conditional Hooks */
@@ -184,10 +144,7 @@ public class Hooks {
         String jsScript;
         Status testStatus;
 
-        if (!config.getConfigurationModel()
-                .getProfile()
-                .getDriverFramework()
-                .equals("browserstack")) {
+        if (!config.getProfile().driver.framework.equals("browserstack")) {
             return;
         }
 
@@ -280,25 +237,22 @@ public class Hooks {
     /** Cleans up all resources created for this thread */
     @After(order = 0)
     public void threadCleanup() {
-        if (config.getParallel()) {
-            Scenario scenario = getScenario();
-            System.out.printf(
-                    "[Thread %2d] Finished [Scenario: %s (%s:%d)] - %s\n",
-                    Thread.currentThread().getId(),
-                    scenario.getName(),
-                    scenario.getUri().toString(),
-                    scenario.getLine(),
-                    scenario.getStatus());
-        }
+        Scenario scenario = getScenario();
+        System.out.printf(
+                "[Thread %2d] Finished [Scenario: %s (%s:%d)] - %s\n",
+                Thread.currentThread().getId(),
+                scenario.getName(),
+                scenario.getUri().toString(),
+                scenario.getLine(),
+                scenario.getStatus());
 
         scenarios.remove();
-        downloadDirectories.remove();
         testEnvironments.remove();
 
-        if (drivers.get() != null) {
+        if (driverDecorators.get() != null) {
             getDriver().close();
             getDriver().quit();
-            drivers.remove();
+            driverDecorators.remove();
         }
     }
 
@@ -311,11 +265,11 @@ public class Hooks {
      */
 
     public static File getDownloadDirectory() {
-        return downloadDirectories.get();
+        return driverDecorators.get().getDownloadDirectory();
     }
 
     public static WebDriver getDriver() {
-        return drivers.get();
+        return driverDecorators.get().getDriver();
     }
 
     public static TestEnvironment getTestEnvironment() {
@@ -330,7 +284,7 @@ public class Hooks {
         return config;
     }
 
-    private static void setDriver(WebDriver driver) {
-        drivers.set(driver);
+    private static void setDriverDecorator(DriverDecorator driver) {
+        driverDecorators.set(driver);
     }
 }

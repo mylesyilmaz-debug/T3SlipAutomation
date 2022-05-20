@@ -4,42 +4,66 @@ environment:
   name: EXAMPLE
   filepath: "./environments/examples/example.env"
 
+defaultProfile: chrome-desktop-headless
+
 # TODO: configure desired device profiles
 profiles:
+  - name: chrome-desktop-debug
+    description: "Chrome desktop driver that is not headless. Main used for debug purposes."
+    driver:
+      framework: selenium
+      capabilities:
+        - key: browser.name
+          value: chrome
+      arguments:
+        - "--ignore-certificate-errors"
+        - "--start-fullscreen"
+      preferences:
+        - key: plugins.always_open_pdf_externally
+          value: false
+
   - name: chrome-desktop
-    driverFramework: selenium
-    capabilities:
-      - name: browser.name
-        value: chrome
-    arguments:
-      - "--headless"
-      - "--disable-gpu"
-      - "--ignore-certificate-errors"
-      - "--start-fullscreen"
-    preferences:
-      - name: plugins.always_open_pdf_externally
-        value: false
+    description: "Chrome desktop driver running in headless mode."
+    driver:
+      framework: selenium
+      capabilities:
+        - key: browser.name
+          value: chrome
+      arguments:
+        - "--headless"
+        - "--disable-gpu"
+        - "--ignore-certificate-errors"
+        - "--start-fullscreen"
+      preferences:
+        - key: plugins.always_open_pdf_externally
+          value: false
+    systemProperties:
+      - key: webdriver.chrome.silentOutput
+        value: true
 
   - name: iphone-12-browserstack
-    driverFramework: browserstack
-    capabilities:
-      - name: os_version
-        value: 14
-      - name: device
-        value: iPhone 12
-      - name: real_mobile
-        value: true
-      - name: project
-        value: group-engagement
+    description: "iPhone 12 remote driver that utilizes BrowserStack."
+    driver:
+      framework: browserstack
+      capabilities:
+        - key: os_version
+          value: 14
+        - key: device
+          value: iPhone 12
+        - key: real_mobile
+          value: true
+        - key: project
+          value: group-engagement
 
   - name: iphone-12-appium
-    driverFramework: appium
-    capabilities:
-      - name: platformName
-        value: iOS
-      - name: platformVersion
-        value: 14
-      - name: deviceName
-        value: iPhone 12
-      - name: automationName
-        value: XCUITest
+    driver:
+      framework: appium
+      capabilities:
+        - key: platformName
+          value: iOS
+        - key: platformVersion
+          value: 14
+        - key: deviceName
+          value: iPhone 12
+        - key: automationName
+          value: XCUITest

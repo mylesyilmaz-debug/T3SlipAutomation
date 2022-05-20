@@ -1,8 +1,7 @@
 package ca.empire.setup;
 
-import ca.empire.setup.configuration.models.CapabilityModel;
-import ca.empire.setup.configuration.models.PreferenceModel;
-import ca.empire.setup.configuration.models.ProfileModel;
+import ca.empire.setup.configuration.models.Mapping;
+import ca.empire.setup.configuration.models.Driver;
 import ca.empire.util.TestEnvironment;
 import io.cucumber.java.Scenario;
 import io.github.bonigarcia.wdm.WebDriverManager;
@@ -16,6 +15,7 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -47,38 +47,35 @@ public class DriverFactory {
     /**
      * Creates a WebDriver based on the provided driver profile.
      *
-     * @param driverProfile - The driver profile that will be used to create the WebDriver.
-     * @param downloadDir - The directory where downloaded files will be placed. Can be null if
-     *     using a mobile device.
+     * @param driver - The driver profile that will be used to create the WebDriver.
      * @return - The WebDriver
      */
-    public static WebDriver createDriver(ProfileModel driverProfile, File downloadDir) {
-        String driverFramework = driverProfile.getDriverFramework();
+    public static DriverDecorator createDriver(Driver driver) {
+        String driverFramework = driver.framework;
 
         if (driverFramework == null) {
-            throw new NullPointerException(
-                    "driverFramework must be specified in the ProfileModel.");
+            throw new NullPointerException("driverFramework must be specified in the DriverModel.");
         }
 
         if (driverFramework.equalsIgnoreCase("browserstack")) {
-            return createBrowserStackDriver(driverProfile);
+            return createBrowserStackDriver(driver);
         } else if (driverFramework.equalsIgnoreCase("appium")) {
-            return createAppiumDriver(driverProfile);
+            return createAppiumDriver(driver);
         } else {
             if (!driverFramework.equalsIgnoreCase("selenium")) {
                 System.out.println(
                         driverFramework + " is not an expected value. Defaulting to 'selenium'...");
             }
 
-            return createDesktopBrowserDriver(driverProfile, downloadDir);
+            return createDesktopBrowserDriver(driver);
         }
     }
 
     /**
-     * @param driverProfile - The driver profile that represents a BrowserStack driver.
+     * @param driver - The driver profile that represents a BrowserStack driver.
      * @return - The resulting BrowserStack driver.
      */
-    private static WebDriver createBrowserStackDriver(ProfileModel driverProfile) {
+    private static DriverDecorator createBrowserStackDriver(Driver driver) {
         TestEnvironment environment = Hooks.getTestEnvironment();
         String browserStackUrl = environment.get("BROWSERSTACK_AUTOMATE_URL");
 
@@ -86,9 +83,11 @@ public class DriverFactory {
 
         caps.setCapability("build", "build-" + factoryStartTime);
 
-        for (CapabilityModel model : driverProfile.getCapabilities()) {
-            caps.setCapability(model.getName().toLowerCase(), model.getValue().toLowerCase());
+        for (Mapping capability : driver.capabilities) {
+            caps.setCapability(capability.key.toLowerCase(), capability.key.toLowerCase());
         }
+
+        DriverDecorator driverDecorator = new DriverDecorator().setUuid(UUID.randomUUID());
 
         // We want to have the final say on what the name will be
         Scenario scenario = Hooks.getScenario();
@@ -97,7 +96,7 @@ public class DriverFactory {
                         + "-line-"
                         + scenario.getLine()
                         + "-uuid-"
-                        + UUID.randomUUID();
+                        + driverDecorator.getUuid();
         caps.setCapability("name", threadName);
 
         if (browserStackUrl == null || browserStackUrl.isEmpty()) {
@@ -106,7 +105,7 @@ public class DriverFactory {
         }
 
         try {
-            return new RemoteWebDriver(new URL(browserStackUrl), caps);
+            return driverDecorator.setDriver(new RemoteWebDriver(new URL(browserStackUrl), caps));
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
@@ -115,40 +114,38 @@ public class DriverFactory {
     }
 
     /**
-     * @param driverProfile - The driver profile that represents an Appium driver.
+     * @param driver - The driver profile that represents an Appium driver.
      * @return - The resulting AppiumDriver.
      */
-    private static WebDriver createAppiumDriver(ProfileModel driverProfile) {
+    private static DriverDecorator createAppiumDriver(Driver driver) {
         throw new UnsupportedOperationException("firefox drivers have not been implemented yet.");
     }
 
     /**
-     * @param driverProfile - The driver profile that represents a standard desktop browser.
-     * @param downloadDir - The directory where downloaded files will be placed.
+     * @param driver - The driver profile that represents a standard desktop browser.
      * @return - The resulting WebDriver.
      */
-    private static WebDriver createDesktopBrowserDriver(
-            ProfileModel driverProfile, File downloadDir) {
+    private static DriverDecorator createDesktopBrowserDriver(Driver driver) {
         HashMap<String, String> caps = new HashMap<>();
 
-        for (CapabilityModel model : driverProfile.getCapabilities()) {
-            caps.put(model.getName().toLowerCase(), model.getValue().toLowerCase());
+        for (Mapping capability : driver.capabilities) {
+            caps.put(capability.key.toLowerCase(), capability.value.toLowerCase());
         }
 
         String browserName = caps.get("browser.name");
 
         if (browserName == null) {
             throw new NullPointerException(
-                    "browser.name must not be null for the default selenium ProfileModel...");
+                    "browser.name must not be null for the default selenium DriverModel...");
         }
 
         switch (SupportedBrowsers.valueOf(browserName)) {
             case chrome:
-                return createChromeDriver(driverProfile, downloadDir);
+                return createChromeDriver(driver);
             case firefox:
-                return createFirefoxDriver(driverProfile, downloadDir);
+                return createFirefoxDriver(driver);
             case edge:
-                return createEdgeDriver(driverProfile, downloadDir);
+                return createEdgeDriver(driver);
             default:
                 throw new IllegalArgumentException("");
         }
@@ -156,21 +153,32 @@ public class DriverFactory {
 
     /**
      * @param driverProfile - The driver profile that represents a ChromeDriver.
-     * @param downloadDir - The directory where downloaded files will be placed.
      * @return - The resulting ChromeDriver.
      */
-    private static ChromeDriver createChromeDriver(ProfileModel driverProfile, File downloadDir) {
+    private static DriverDecorator createChromeDriver(Driver driverProfile) {
         HashMap<String, String> caps = new HashMap<>();
-        for (CapabilityModel model : driverProfile.getCapabilities()) {
-            caps.put(model.getName().toLowerCase(), model.getValue().toLowerCase());
+        for (Mapping capability : driverProfile.capabilities) {
+            caps.put(capability.key.toLowerCase(), capability.value.toLowerCase());
         }
 
         HashMap<String, Object> prefs = new HashMap<>();
-        for (PreferenceModel model : driverProfile.getPreferences()) {
-            prefs.put(model.getName().toLowerCase(), model.getValue());
+        for (Mapping preference : driverProfile.preferences) {
+            prefs.put(preference.key, preference.value);
         }
 
-        prefs.put("download.default_directory", downloadDir.getAbsolutePath());
+        DriverDecorator driverDecorator =
+                new DriverDecorator()
+                        .setUuid(UUID.randomUUID());
+
+        try {
+            driverDecorator.setDownloadDirectory(
+                    generateTempDownloadDirectory(driverDecorator.getUuid()));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        prefs.put("download.default_directory", driverDecorator.getDownloadDirectory().getAbsolutePath());
 
         lock.readLock().lock();
         Boolean isSetup = driverSetups.get(SupportedBrowsers.chrome);
@@ -204,28 +212,52 @@ public class DriverFactory {
 
         ChromeOptions options = new ChromeOptions();
 
-        options.addArguments(driverProfile.getArguments());
+        options.addArguments(driverProfile.arguments);
         options.setExperimentalOption("prefs", prefs);
         options.setPageLoadStrategy(PageLoadStrategy.NORMAL);
 
-        return new ChromeDriver(options);
+        return driverDecorator.setDriver(new ChromeDriver(options));
     }
 
     /**
-     * @param driverProfile - The driver profile that represents a FirefoxDriver.
-     * @param downloadDir - The directory where downloaded files will be placed.
+     * @param driver - The driver profile that represents a FirefoxDriver.
      * @return - The resulting FirefoxDriver.
      */
-    private static FirefoxDriver createFirefoxDriver(ProfileModel driverProfile, File downloadDir) {
+    private static DriverDecorator createFirefoxDriver(Driver driver) {
         throw new UnsupportedOperationException("firefox drivers have not been implemented yet.");
     }
 
     /**
-     * @param driverProfile - The driver profile that represents a EdgeDriver.
-     * @param downloadDir - The directory where downloaded files will be placed.
+     * @param driver - The driver profile that represents a EdgeDriver.
      * @return - The resulting EdgeDriver.
      */
-    private static EdgeDriver createEdgeDriver(ProfileModel driverProfile, File downloadDir) {
+    private static DriverDecorator createEdgeDriver(Driver driver) {
         throw new UnsupportedOperationException("edge drivers have not been implemented yet.");
+    }
+
+    /*
+    ====================================================================================================================
+                                                        Util Methods
+    ====================================================================================================================
+     */
+
+    private static File generateTempDownloadDirectory(UUID uuid) throws IOException {
+        String separator = File.separator;
+        String basePath =
+                System.getProperty("user.dir")
+                        + separator
+                        + ".temp"
+                        + separator
+                        + "downloads"
+                        + separator;
+
+        File directory = new File(basePath + uuid.toString());
+
+        if (!directory.mkdirs()) {
+            throw new IOException(
+                    "Unable to create download directory " + directory.getAbsolutePath());
+        }
+
+        return directory;
     }
 }

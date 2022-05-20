@@ -4,8 +4,8 @@
 - [ ] Implement remain browser drivers:
     - [ ] Firefox
     - [ ] Edge
-- [ ] Finalize configuration structure
-- [ ] Verify ReportPortal implementation
+- [x] Finalize configuration structure
+- [x] Verify ReportPortal implementation
 - [ ] Create more robust shutdown hooks
 - [ ] Implement Logging
 - [ ] Implement REST Interface
