@@ -29,8 +29,7 @@ public class Hooks {
         logger.traceEntry();
 
         // This should help clean up the logs.
-        java.util.logging.Logger.getLogger("org.openqa.selenium").setLevel(Level.OFF);
-        java.util.logging.Logger.getLogger("io.cucumber.java").setLevel(Level.OFF);
+        java.util.logging.Logger.getLogger("org.openqa.selenium").setLevel(Level.WARNING);
 
         String configFilepath = System.getProperty("config.filepath", "");
         String configProfile = System.getProperty("config.profile", "");

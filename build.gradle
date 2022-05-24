@@ -17,19 +17,12 @@ repositories {
 }
 
 def cucumber_version = '7.3.4'
-def selenium_version = "3.141.59"
+def selenium_version = "4.1.4"
 def rest_assured_version = "4.5.0"
-def driver_manager_version = '5.0.2'
-def appium_version = '7.6.0'
+def driver_manager_version = '5.1.1'
+def appium_version = '8.0.0'
 def apache_poi_version = "5.0.0"
-def xml_apis_version = "1.4.01"
 def jackson_version = "2.13.3"
-
-configurations.all {
-    resolutionStrategy {
-        force "xml-apis:xml-apis:${xml_apis_version}"
-    }
-}
 
 configurations {
     cucumberRuntime {
@@ -77,7 +70,7 @@ dependencies {
     testImplementation group: 'io.appium', name: 'java-client', version: appium_version
     testImplementation group: 'org.jetbrains', name: 'annotations', version: '23.0.0'
     testImplementation group: 'com.jayway.jsonpath', name: 'json-path', version: '2.6.0'
-    testImplementation group: 'xml-apis', name: 'xml-apis', version: xml_apis_version
+    testImplementation group: 'io.netty', name: 'netty-all', version: '4.1.77.Final'
 
     testImplementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.17.2'
     testImplementation group: 'org.assertj', name: 'assertj-core', version: '3.22.0'

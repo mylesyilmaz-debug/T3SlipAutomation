@@ -11,6 +11,7 @@ import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.edge.EdgeDriver;
+import org.openqa.selenium.edge.EdgeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
@@ -200,13 +201,15 @@ public class DriverFactory {
     private static DriverDecorator createChromeDriver(Driver driverProfile) {
         logger.traceEntry(() -> driverProfile);
 
+        final SupportedBrowsers browserName = SupportedBrowsers.chrome;
         HashMap<String, String> caps = new HashMap<>();
+        HashMap<String, Object> prefs = new HashMap<>();
+
         for (Mapping capability : driverProfile.capabilities) {
             logger.debug("Setting capability - " + capability.key + ":" + capability.value);
             caps.put(capability.key.toLowerCase(), capability.value.toLowerCase());
         }
 
-        HashMap<String, Object> prefs = new HashMap<>();
         for (Mapping preference : driverProfile.preferences) {
             logger.debug("Setting preference - " + preference.key + ":" + preference.value);
             prefs.put(preference.key, preference.value);
@@ -227,7 +230,7 @@ public class DriverFactory {
                 driverDecorator.getDownloadDirectory().getAbsolutePath());
 
         lock.readLock().lock();
-        Boolean isSetup = driverSetups.get(SupportedBrowsers.chrome);
+        Boolean isSetup = driverSetups.get(browserName);
         lock.readLock().unlock();
 
         if (!isSetup) {
@@ -235,7 +238,7 @@ public class DriverFactory {
             logger.info("Attempting to setup ChromeDriver...");
             // Double check that it hasn't already been setup while waiting to acquire the write
             // lock
-            if (!driverSetups.get(SupportedBrowsers.chrome)) {
+            if (!driverSetups.get(browserName)) {
                 try {
                     WebDriverManager manager = WebDriverManager.chromedriver();
 
@@ -244,7 +247,7 @@ public class DriverFactory {
                     }
 
                     manager.setup();
-                    driverSetups.put(SupportedBrowsers.chrome, true);
+                    driverSetups.put(browserName, true);
                     logger.info("ChromeDriver is done setup.");
                 } catch (Exception e) {
                     logger.error(e);
@@ -259,8 +262,9 @@ public class DriverFactory {
         ChromeOptions options =
                 new ChromeOptions()
                         .addArguments(driverProfile.arguments)
-                        .setExperimentalOption("prefs", prefs)
-                        .setPageLoadStrategy(PageLoadStrategy.NORMAL);
+                        .setExperimentalOption("prefs", prefs);
+
+        options.setPageLoadStrategy(PageLoadStrategy.NORMAL);
         driverDecorator.setDriver(new ChromeDriver(options));
 
         logger.traceExit(driverDecorator);
@@ -268,25 +272,91 @@ public class DriverFactory {
     }
 
     /**
-     * @param driver - The driver profile that represents a FirefoxDriver.
+     * @param driverProfile - The driver profile that represents a FirefoxDriver.
      * @return - The resulting FirefoxDriver.
      */
-    private static DriverDecorator createFirefoxDriver(Driver driver) {
-        logger.traceEntry(() -> driver);
+    private static DriverDecorator createFirefoxDriver(Driver driverProfile) {
+        logger.traceEntry(() -> driverProfile);
         /* ... */
         logger.traceExit();
         throw new UnsupportedOperationException("firefox drivers have not been implemented yet.");
     }
 
     /**
-     * @param driver - The driver profile that represents a EdgeDriver.
+     * @param driverProfile - The driver profile that represents a EdgeDriver.
      * @return - The resulting EdgeDriver.
      */
-    private static DriverDecorator createEdgeDriver(Driver driver) {
-        logger.traceEntry(() -> driver);
-        /* ... */
-        logger.traceExit();
-        throw new UnsupportedOperationException("edge drivers have not been implemented yet.");
+    private static DriverDecorator createEdgeDriver(Driver driverProfile) {
+        logger.traceEntry(() -> driverProfile);
+
+        HashMap<String, String> caps = new HashMap<>();
+        HashMap<String, Object> prefs = new HashMap<>();
+        final SupportedBrowsers browserName = SupportedBrowsers.edge;
+
+        for (Mapping capability : driverProfile.capabilities) {
+            logger.debug("Setting capability - " + capability.key + ":" + capability.value);
+            caps.put(capability.key.toLowerCase(), capability.value.toLowerCase());
+        }
+
+        for (Mapping preference : driverProfile.preferences) {
+            logger.debug("Setting preference - " + preference.key + ":" + preference.value);
+            prefs.put(preference.key, preference.value);
+        }
+
+        DriverDecorator driverDecorator = new DriverDecorator().setUuid(UUID.randomUUID());
+
+        try {
+            driverDecorator.setDownloadDirectory(
+                    generateTempDownloadDirectory(driverDecorator.getUuid()));
+        } catch (IOException e) {
+            logger.error(e);
+            return null;
+        }
+
+        prefs.put(
+                "download.default_directory",
+                driverDecorator.getDownloadDirectory().getAbsolutePath());
+
+        lock.readLock().lock();
+        Boolean isSetup = driverSetups.get(browserName);
+        lock.readLock().unlock();
+
+        if (!isSetup) {
+            lock.writeLock().lock();
+            logger.info("Attempting to setup ChromeDriver...");
+            // Double check that it hasn't already been setup while waiting to acquire the write
+            // lock
+            if (!driverSetups.get(browserName)) {
+                try {
+                    WebDriverManager manager = WebDriverManager.chromedriver();
+
+                    if (caps.containsKey("browser.version")) {
+                        manager = manager.browserVersion(caps.get("browser.version"));
+                    }
+
+                    manager.setup();
+                    driverSetups.put(browserName, true);
+                    logger.info("ChromeDriver is done setup.");
+                } catch (Exception e) {
+                    logger.error(e);
+                }
+            } else {
+                logger.info("ChromeDriver was setup while waiting for write lock.");
+            }
+
+            lock.writeLock().unlock();
+        }
+
+        EdgeOptions options =
+                new EdgeOptions()
+                        .addArguments(driverProfile.arguments)
+                        .setExperimentalOption("prefs", prefs);
+
+        options.setPageLoadStrategy(PageLoadStrategy.NORMAL);
+        driverDecorator.setDriver(new EdgeDriver(options));
+
+        logger.traceExit(driverDecorator);
+        return driverDecorator;
     }
 
     /*
