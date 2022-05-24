@@ -9,7 +9,7 @@ defaultProfile: chrome-desktop
 # TODO: configure desired device profiles
 profiles:
   - name: chrome-desktop-debug
-    description: "Chrome desktop driver that is not headless. Main used for debug purposes."
+    description: "Chrome desktop driver that is not headless. Mainly used for debuging purposes."
     driver:
       framework: selenium
       capabilities:
@@ -20,7 +20,11 @@ profiles:
         - "--start-fullscreen"
       preferences:
         - key: plugins.always_open_pdf_externally
+          value: true
+        - key: download.prompt_for_download
           value: false
+        - key: download.directory_upgrade
+          value: true
 
   - name: chrome-desktop
     description: "Chrome desktop driver running in headless mode."
@@ -36,10 +40,76 @@ profiles:
         - "--start-fullscreen"
       preferences:
         - key: plugins.always_open_pdf_externally
+          value: true
+        - key: download.prompt_for_download
           value: false
+        - key: download.directory_upgrade
+          value: true
     systemProperties:
       - key: webdriver.chrome.silentOutput
         value: true
+
+  - name: firefox-desktop
+    description: "FireFox driver running in headless mode."
+    driver:
+      framework: selenium
+      capabilities:
+        - key: browser.name
+          value: firefox
+      arguments:
+        - "-headless"
+        - "-width 1280"
+        - "-height 720"
+        - "-no-remote"
+        - "-log {'level': 'error'}"
+      preferences:
+        - key: browser.download.folderList
+          value: 2
+        - key: browser.download.manager.showWhenStarting
+          value: false
+        - key: browser.download.manager.useWindow
+          value: false
+        - key: browser.download.manager.focusWhenStarting
+          value: false
+        - key: browser.download.manager.showAlertOnComplete
+          value: false
+        - key: browser.download.manager.closeWhenDone
+          value: true
+        - key: browser.helperApps.neverAsk.saveToDisk
+          value: "text/plain,text/x-csv,text/csv,application/vnd.ms-excel,application/csv,application/x-csv,text/csv,text/comma-separated-values,text/x-comma-separated-values,text/tab-separated-values,application/pdf"
+        - key: browser.helperApps.neverAsk.openFile
+          value: "text/plain,text/x-csv,text/csv,application/vnd.ms-excel,application/csv,application/x-csv,text/csv,text/comma-separated-values,text/x-comma-separated-values,text/tab-separated-values,application/pdf"
+        - key: browser.helperApps.alwaysAsk.force
+          value: false
+        - key: layers.acceleration.force-enabled
+          value: false
+        - key: pdfjs.disabled
+          value: true
+        - key: security.ssl.enable_ocsp_stapling
+          value: false
+    systemProperties:
+      - key: webdriver.firefox.logfile
+        value: /dev/null # This essentially disables logging for Firefox, but will only work for Unix/Linux based devices
+
+  - name: edge-desktop
+    description: "Windows Edge browser running in headless mode."
+    driver:
+      framework: selenium
+      capabilities:
+        - key: browser.name
+          value: edge
+      arguments:
+        - "--headless"
+        - "--disable-gpu"
+        - "--ignore-certificate-errors"
+        - "--start-fullscreen"
+      preferences:
+         - key: plugins.always_open_pdf_externally
+           value: true
+         - key: download.prompt_for_download
+           value: false
+         - key: download.directory_upgrade
+           value: true
 
   - name: iphone-12-browserstack
     description: "iPhone 12 remote driver that utilizes BrowserStack."

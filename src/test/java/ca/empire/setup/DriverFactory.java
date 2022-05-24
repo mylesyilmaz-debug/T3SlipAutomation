@@ -13,6 +13,8 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.edge.EdgeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
+import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
@@ -277,9 +279,72 @@ public class DriverFactory {
      */
     private static DriverDecorator createFirefoxDriver(Driver driverProfile) {
         logger.traceEntry(() -> driverProfile);
-        /* ... */
-        logger.traceExit();
-        throw new UnsupportedOperationException("firefox drivers have not been implemented yet.");
+
+        HashMap<String, String> caps = new HashMap<>();
+        final SupportedBrowsers browserName = SupportedBrowsers.firefox;
+
+        for (Mapping capability : driverProfile.capabilities) {
+            logger.debug("Setting capability - " + capability.key + ":" + capability.value);
+            caps.put(capability.key.toLowerCase(), capability.value.toLowerCase());
+        }
+
+        lock.readLock().lock();
+        Boolean isSetup = driverSetups.get(browserName);
+        lock.readLock().unlock();
+
+        if (!isSetup) {
+            lock.writeLock().lock();
+            logger.info("Attempting to setup " + browserName +  "...");
+            // Double check that it hasn't already been setup while waiting to acquire the write
+            // lock
+            if (!driverSetups.get(browserName)) {
+                try {
+                    WebDriverManager manager = WebDriverManager.firefoxdriver();
+
+                    if (caps.containsKey("browser.version")) {
+                        manager = manager.browserVersion(caps.get("browser.version"));
+                    }
+
+                    manager.setup();
+                    driverSetups.put(browserName, true);
+                    logger.info(browserName + " is done setup.");
+                } catch (Exception e) {
+                    logger.error(e);
+                }
+            } else {
+                logger.info(browserName + " was setup while waiting for write lock.");
+            }
+
+            lock.writeLock().unlock();
+        }
+
+        DriverDecorator driverDecorator = new DriverDecorator().setUuid(UUID.randomUUID());
+
+        try {
+            driverDecorator.setDownloadDirectory(
+                    generateTempDownloadDirectory(driverDecorator.getUuid()));
+        } catch (IOException e) {
+            logger.error(e);
+            return null;
+        }
+
+        FirefoxProfile profile = new FirefoxProfile();
+
+        for (Mapping pref : driverProfile.preferences) {
+            profile.setPreference(pref.key, pref.value);
+        }
+
+        FirefoxOptions options =
+                new FirefoxOptions()
+                        .addArguments(driverProfile.arguments)
+                        .setProfile(profile);
+
+        options.addPreference("browser.download.dir", driverDecorator.getDownloadDirectory().getAbsolutePath());
+        options.setPageLoadStrategy(PageLoadStrategy.NORMAL);
+        driverDecorator.setDriver(new FirefoxDriver(options));
+
+        logger.traceExit(driverDecorator);
+        return driverDecorator;
     }
 
     /**
@@ -323,12 +388,12 @@ public class DriverFactory {
 
         if (!isSetup) {
             lock.writeLock().lock();
-            logger.info("Attempting to setup ChromeDriver...");
+            logger.info("Attempting to setup " + browserName +  "...");
             // Double check that it hasn't already been setup while waiting to acquire the write
             // lock
             if (!driverSetups.get(browserName)) {
                 try {
-                    WebDriverManager manager = WebDriverManager.chromedriver();
+                    WebDriverManager manager = WebDriverManager.edgedriver();
 
                     if (caps.containsKey("browser.version")) {
                         manager = manager.browserVersion(caps.get("browser.version"));
@@ -336,12 +401,12 @@ public class DriverFactory {
 
                     manager.setup();
                     driverSetups.put(browserName, true);
-                    logger.info("ChromeDriver is done setup.");
+                    logger.info(browserName + " is done setup.");
                 } catch (Exception e) {
                     logger.error(e);
                 }
             } else {
-                logger.info("ChromeDriver was setup while waiting for write lock.");
+                logger.info(browserName + " was setup while waiting for write lock.");
             }
 
             lock.writeLock().unlock();
