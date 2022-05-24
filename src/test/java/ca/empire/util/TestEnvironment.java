@@ -1,5 +1,7 @@
 package ca.empire.util;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,29 +17,42 @@ import java.util.regex.Pattern;
 
 public class TestEnvironment {
     private static final String KEY_PATTERN = "[\\w\\d-]+";
+    private static final Logger logger = LogManager.getLogger(TestEnvironment.class);
 
     private HashMap<String, Object> env;
 
     public TestEnvironment(boolean includeSystemEnv) {
+        logger.traceEntry(() -> includeSystemEnv);
         env = new HashMap<>();
 
         if (includeSystemEnv) {
             env.putAll(System.getenv());
         }
+        logger.traceExit(this);
     }
 
     public TestEnvironment(@NotNull File envFile, boolean includeSystemEnv) throws IOException {
         this(includeSystemEnv);
+        logger.traceEntry(() -> envFile, () -> includeSystemEnv);
 
         if (!envFile.exists()) {
-            throw new IllegalArgumentException(envFile.getPath() + " does not exist.");
+            IllegalArgumentException e =
+                    new IllegalArgumentException(envFile.getPath() + " does not exist.");
+            logger.error(e);
+            throw e;
         } else if (!envFile.isFile()) {
-            throw new IllegalArgumentException(envFile.getAbsolutePath() + "is not a file.");
+            IllegalArgumentException e =
+                    new IllegalArgumentException(envFile.getAbsolutePath() + "is not a file.");
+            logger.error(e);
+            throw e;
         }
 
         if (!loadEnvFile(envFile)) {
-            throw new IOException("Unable to load env file " + envFile.getAbsolutePath());
+            IOException e = new IOException("Unable to load env file " + envFile.getAbsolutePath());
+            logger.error(e);
+            throw e;
         }
+        logger.traceExit(this);
     }
 
     /**
@@ -46,6 +61,8 @@ public class TestEnvironment {
      * @param envFile [File] The File that represents the .env file.
      */
     private boolean loadEnvFile(@NotNull File envFile) {
+        logger.traceEntry(() -> envFile);
+
         try {
             FileReader fr = new FileReader(envFile);
             BufferedReader br = new BufferedReader(fr);
@@ -74,10 +91,12 @@ public class TestEnvironment {
                 env.put(matcher.group(1), matcher.group(2));
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e);
+            logger.traceExit(false);
             return false;
         }
 
+        logger.traceExit(true);
         return true;
     }
 
@@ -96,6 +115,9 @@ public class TestEnvironment {
      * @return The string with all possible env vars parsed.
      */
     public String parseString(@NotNull String string) {
+        String entryString = string;
+        logger.traceEntry(() -> entryString);
+
         Matcher matcher = Pattern.compile("\\{\\{(" + KEY_PATTERN + ")}}").matcher(string);
 
         while (matcher.find()) {
@@ -111,6 +133,7 @@ public class TestEnvironment {
             }
         }
 
+        logger.traceExit("***");
         return string;
     }
 
@@ -126,7 +149,9 @@ public class TestEnvironment {
      */
     @SuppressWarnings("unchecked")
     public <T> T get(@Nullable String key) {
+        logger.traceEntry(() -> key);
         checkKey(key);
+        logger.traceExit("***");
         return (T) env.get(key);
     }
 
@@ -137,7 +162,9 @@ public class TestEnvironment {
      *     alphanumeric).
      */
     public Object put(@Nullable String key, @Nullable Object value) {
+        logger.traceEntry(() -> key, () -> "***");
         checkKey(key);
+        logger.traceExit("***");
         return env.put(key, value);
     }
 
@@ -148,8 +175,11 @@ public class TestEnvironment {
      *     alphanumeric).
      */
     public boolean containsKey(@Nullable String key) {
+        logger.traceEntry(() -> key);
         checkKey(key);
-        return env.containsKey(key);
+        boolean result = env.containsKey(key);
+        logger.traceExit(result);
+        return result;
     }
 
     /**
@@ -159,7 +189,9 @@ public class TestEnvironment {
      *     alphanumeric).
      */
     public Object remove(@Nullable String key) {
+        logger.traceEntry(() -> key);
         checkKey(key);
+        logger.traceExit("***");
         return env.remove(key);
     }
 
@@ -170,17 +202,24 @@ public class TestEnvironment {
      *     alphanumeric).
      */
     public boolean remove(@Nullable String key, @Nullable Object value) {
+        logger.traceEntry(() -> key, () -> "***");
         checkKey(key);
-        return env.remove(key, value);
+        boolean result = env.remove(key, value);
+        logger.traceExit(result);
+        return result;
     }
 
     /** Wrapper for the HashMap keySet method. */
     public Set<String> keySet() {
+        logger.traceEntry();
+        logger.traceExit(env.keySet());
         return env.keySet();
     }
 
     /** Wrapper for the HashMap values method. */
     public Collection<Object> values() {
+        logger.traceEntry();
+        logger.traceExit("***");
         return env.values();
     }
 
@@ -191,12 +230,17 @@ public class TestEnvironment {
      * @throws IllegalArgumentException When the provided key is not valid.
      */
     private static void checkKey(String key) {
+        logger.traceEntry(() -> key);
         if (!Pattern.compile(KEY_PATTERN).matcher(key).matches()) {
-            throw new IllegalArgumentException(
-                    "The provided key <"
-                            + key
-                            + "> does not match the expected pattern: "
-                            + KEY_PATTERN);
+            IllegalArgumentException e =
+                    new IllegalArgumentException(
+                            "The provided key <"
+                                    + key
+                                    + "> does not match the expected pattern: "
+                                    + KEY_PATTERN);
+            logger.error(e);
+            throw e;
         }
+        logger.traceExit();
     }
 }

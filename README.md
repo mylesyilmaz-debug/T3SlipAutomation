@@ -14,6 +14,10 @@
 │   └── ...                                     |< Any .env files should go here.
 └── src.test                                    |
     ├── java.ca.empire                          |
+    │   ├── exceptions                          |
+    │   │   ├── AutomationException.java        |< Indicates that there was an automation error.
+    │   │   ├── PageStateException.java         |< Indicates that there was an issue with the state of a PageObject.
+    │   │   ├── ...                             |< Any other exceptions should go here
     │   ├── pages                               |
     │   │   ├── PageObject.java                 |< The top level PageObject that all other pages should inherit from.
     │   │   └── ...                             |< Other page files should go here.
@@ -21,6 +25,7 @@
     │   │   └── CucumberRunner.java             |< The Cucumber test runner used for debugging.
     │   ├── setup                               |
     │   │   ├── DriverFactory.java              |< Factory responsible for creating the drivers for a given profile.
+    │   │   ├── DriverDecorator.java            |< A decorator for the WebDrivers that contains additional information.
     │   │   ├── Hooks.java                      |< The "main" class that holds the hooks and coordinates setup.
     │   │   └── configuration                   |
     │   │       ├── Config.java                 |< Creates models based on config file and holds other config info.
@@ -38,8 +43,11 @@
     │   └── util                                |
     │       ├── BatchAssertion.java             |< Used to assess multiple assertions at once.
     │       └── TestEnvironment.java            |< Stores environment variables and test data.
+    │       └── ...                             |< Any other utils should go here.
     └── resources                               |
+        ├── log4j2.yaml                         |< The configuration file for the log4j implementation.
         ├── configs                             |
+        │   └── example-config.yaml             |< A basic config template that can be used for bare metal test exectutions.
         │   └── ...                             |< Config files should go here, but you can place them elsewhere if needed.
         └── feature                             |
             └── ...                             |< Feature files must go here.
