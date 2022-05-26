@@ -87,8 +87,10 @@ test {
     systemProperty "threads", System.getProperty("threads", "1")
 }
 
-task cucumber() {
+tasks.register('cucumber') {
     dependsOn assemble, testClasses
+    outputs.upToDateWhen {false}
+
     doLast {
         javaexec {
             String threads = project.property("threads") == null ? "1" : project.property("threads")

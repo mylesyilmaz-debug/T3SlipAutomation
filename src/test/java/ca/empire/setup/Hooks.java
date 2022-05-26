@@ -154,7 +154,7 @@ public class Hooks {
         String jsScript;
         Status testStatus;
 
-        if (!config.getProfile().driver.framework.equals("browserstack")) {
+        if (!config.getProfile().driver.name.equals("browserstack")) {
             return;
         }
 
@@ -200,9 +200,15 @@ public class Hooks {
     @After(order = 2)
     public void deleteDownloadDirectory() {
         logger.traceEntry();
+        File downloadDir = getDownloadDirectory();
+
+        if (downloadDir == null) {
+            logger.info("This driver does not have any download directories associated with it.");
+            logger.traceExit();
+            return;
+        }
 
         Scenario scenario = getScenario();
-        File downloadDir = getDownloadDirectory();
         File[] downloadedFiles = downloadDir.listFiles();
         long maxSize = (long) Math.pow(2, 23); // roughly 8MB
 

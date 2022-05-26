@@ -34,7 +34,6 @@
     │   │           ├── Configuration.java      |< Serializeable model representing the config file.
     │   │           ├── Driver.java             |< Serializeable model representing a driver configuration profile.
     │   │           ├── Environment.java        |< Serializeable model representing the environment.
-    │   │           ├── Mapping.java            |< Serializeable model representing a generic key/value mapping.
     │   │           └── Profile.java            |< Serializeable model representing a test profile.
     │   ├── steps                               |
     │   │   ├── GenericSteps.java               |< Generic steps that can be used regardless of test environment.
@@ -62,33 +61,32 @@ environment:                  #< (OPTIONAL) The object containing information ab
   name: <string>              #< (OPTIONAL) The name of the environment that is being used.
                               #
 profiles:                     #< The list of driver profiles that are available to us.
-  - name: <stirng>            #< The name of a driver profile.
+  - name: <string>            #< The name of a driver profile.
     description: <string>     #< (OPTIONAL) A description for the device profile. Mainly used for documentation.
     systemProperties:         #< (OPTIONAL) The list of system properties that should be set for this driver profile.
-      - key: <string>         #< The key of the system property.
-        value: <string>       #< The value of the system property.
-      - ...                   #
+      key: value              #< The SystemProperty mapping that we want to set.
+      ...                     #
     driver:                   #< The object that outlines the specifics of the driver profile.
-      framework: <string>     #< What framework should be used to create the driver [selenium, browserstack, appium]
+      name: <string>          #< What framework should be used to create the driver [selenium, browserstack, appium]
       capabilities:           #< The list of capabilities that will be used when creating the driver.
-        - key: <string>       #< The key of the property.
-          value: <string>     #< The value of the property.
-        - ...                 #
-      preferences:            #< (OPTIONAL) The preferences that should be applied to the driver.
-        - key: <string>       #< The key of the preference.
-          value: <object>     #< The value of the preference.
-        - ...                 #
+        key: value            #< The capability mapping.
+        ...                   #
+      preferences:            #< (OPTIONAL) The preferences that should be applied to the driver. Mainly used by Firefox.
+        key: value            #< The preference mapping.
+        ...                   #
       arguments:              #< (OPTIONAL) The list of launch arguments that should be used when starting the driver.
         - <string>            #< A launch argument.
         - ...                 #
+      experimentalOptions:    #< (OPTIONAL) The map containing the experimental options that we want to use for Chromium based drivers.
+        key: value            # The experimental option mapping.
+        ...                   #
   - ...                       #
                               #
 defaultProfile: <string>      #< (OPTIONAL) The default profile that should be used in the event that none are provided.
                               #
 systemProperties:             #< (OPTIONAL) The list of system properties that should be set before running any tests. Will be overwritten by driver specific system properties.
-  - key: <string>             #< The key of the system property.
-    value: <string>           #< The value of the system property.
-  - ...                       #
+  key: value                  #< The SystemProperty mapping that we want to set.
+  ...                         #
 ```
 
 ## Running Tests

@@ -6,11 +6,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.List;
+import java.util.Map;
 
 public class Configuration implements Model {
     public final Environment environment;
     public final String defaultProfile;
-    public final List<Mapping> systemProperties;
+    public final Map<String, String> systemProperties;
     public final List<Profile> profiles;
 
     private static final Logger logger = LogManager.getLogger(Configuration.class);
@@ -19,7 +20,7 @@ public class Configuration implements Model {
     public Configuration(
             @JsonProperty("environment") Environment environment,
             @JsonProperty("defaultProfile") String defaultProfile,
-            @JsonProperty("systemProperties") List<Mapping> systemProperties,
+            @JsonProperty("systemProperties") Map<String, String> systemProperties,
             @JsonProperty("profiles") List<Profile> profiles) {
         logger.traceEntry(
                 () -> environment, () -> defaultProfile, () -> systemProperties, () -> profiles);

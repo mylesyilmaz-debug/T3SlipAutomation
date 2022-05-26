@@ -6,12 +6,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.List;
+import java.util.Map;
 
 public class Profile implements Model {
     public final String name;
     public final String description;
     public final Driver driver;
-    public final List<Mapping> systemProperties;
+    public final Map<String, String> systemProperties;
 
     private static final Logger logger = LogManager.getLogger(Profile.class);
 
@@ -20,7 +21,7 @@ public class Profile implements Model {
             @JsonProperty("name") String name,
             @JsonProperty("description") String description,
             @JsonProperty("driver") Driver driver,
-            @JsonProperty("systemProperties") List<Mapping> systemProperties) {
+            @JsonProperty("systemProperties") Map<String, String> systemProperties) {
         logger.traceEntry(() -> name, () -> description, () -> driver, () -> systemProperties);
         this.name = name;
         this.description = description;

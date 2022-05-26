@@ -11,51 +11,77 @@ profiles:
   - name: chrome-desktop-debug
     description: "Chrome desktop driver that is not headless. Mainly used for debuging purposes."
     driver:
-      framework: selenium
-      capabilities:
-        - key: browser.name
-          value: chrome
+      name: chrome
       arguments:
         - "--ignore-certificate-errors"
         - "--start-fullscreen"
-      preferences:
-        - key: plugins.always_open_pdf_externally
-          value: true
-        - key: download.prompt_for_download
-          value: false
-        - key: download.directory_upgrade
-          value: true
+      experimentalOptions:
+        prefs:
+          plugins.always_open_pdf_externally: true
+          download.prompt_for_download: false
+          download.directory_upgrade: true
 
   - name: chrome-desktop
     description: "Chrome desktop driver running in headless mode."
     driver:
-      framework: selenium
-      capabilities:
-        - key: browser.name
-          value: chrome
+      name: chrome
       arguments:
         - "--headless"
         - "--disable-gpu"
         - "--ignore-certificate-errors"
         - "--start-fullscreen"
-      preferences:
-        - key: plugins.always_open_pdf_externally
-          value: true
-        - key: download.prompt_for_download
-          value: false
-        - key: download.directory_upgrade
-          value: true
+      experimentalOptions:
+        prefs:
+          plugins.always_open_pdf_externally: true
+          download.prompt_for_download: false
+          download.directory_upgrade: true
     systemProperties:
-      - key: webdriver.chrome.silentOutput
-        value: true
+      webdriver.chrome.silentOutput: true
+
+  - name: chrome-desktop-responsive
+    description: "Chrome desktop driver using responsive mobile emulation."
+    driver:
+      name: chrome
+      arguments:
+        - "--headless"
+        - "--disable-gpu"
+        - "--ignore-certificate-errors"
+        - "--start-fullscreen"
+      experimentalOptions:
+        mobileEmulation:
+          deviceMetrics:
+            width: 768
+            height: 1024
+        prefs:
+          plugins.always_open_pdf_externally: true
+          download.prompt_for_download: false
+          download.directory_upgrade: true
+    systemProperties:
+      webdriver.chrome.silentOutput: true
+
+  - name: chrome-desktop-responsive-iphone-se
+    description: "Chrome desktop driver using iPhone SE mobile emulation."
+    driver:
+      name: chrome
+      arguments:
+        - "--headless"
+        - "--disable-gpu"
+        - "--ignore-certificate-errors"
+        - "--start-fullscreen"
+      experimentalOptions:
+        mobileEmulation:
+          deviceName: "iPhone SE"
+        prefs:
+          plugins.always_open_pdf_externally: true
+          download.prompt_for_download: false
+          download.directory_upgrade: true
+    systemProperties:
+      webdriver.chrome.silentOutput: true
 
   - name: firefox-desktop
     description: "FireFox driver running in headless mode."
     driver:
-      framework: selenium
-      capabilities:
-        - key: browser.name
-          value: firefox
+      name: firefox
       arguments:
         - "-headless"
         - "-width 1280"
@@ -63,96 +89,63 @@ profiles:
         - "-no-remote"
         - "-log {'level': 'error'}"
       preferences:
-        - key: browser.download.folderList
-          value: 2
-        - key: browser.download.manager.showWhenStarting
-          value: false
-        - key: browser.download.manager.useWindow
-          value: false
-        - key: browser.download.manager.focusWhenStarting
-          value: false
-        - key: browser.download.manager.showAlertOnComplete
-          value: false
-        - key: browser.download.manager.closeWhenDone
-          value: true
-        - key: browser.helperApps.neverAsk.saveToDisk
-          value: "text/plain,text/x-csv,text/csv,application/vnd.ms-excel,application/csv,application/x-csv,text/csv,text/comma-separated-values,text/x-comma-separated-values,text/tab-separated-values,application/pdf"
-        - key: browser.helperApps.neverAsk.openFile
-          value: "text/plain,text/x-csv,text/csv,application/vnd.ms-excel,application/csv,application/x-csv,text/csv,text/comma-separated-values,text/x-comma-separated-values,text/tab-separated-values,application/pdf"
-        - key: browser.helperApps.alwaysAsk.force
-          value: false
-        - key: layers.acceleration.force-enabled
-          value: false
-        - key: pdfjs.disabled
-          value: true
-        - key: security.ssl.enable_ocsp_stapling
-          value: false
+        browser.download.folderList: 2
+        browser.download.manager.showWhenStarting: false
+        browser.download.manager.useWindow: false
+        browser.download.manager.focusWhenStarting: false
+        browser.download.manager.showAlertOnComplete: false
+        browser.download.manager.closeWhenDone: true
+        browser.helperApps.neverAsk.saveToDisk: "text/plain,text/x-csv,text/csv,application/vnd.ms-excel,application/csv,application/x-csv,text/csv,text/comma-separated-values,text/x-comma-separated-values,text/tab-separated-values,application/pdf"
+        browser.helperApps.neverAsk.openFile: "text/plain,text/x-csv,text/csv,application/vnd.ms-excel,application/csv,application/x-csv,text/csv,text/comma-separated-values,text/x-comma-separated-values,text/tab-separated-values,application/pdf"
+        browser.helperApps.alwaysAsk.force: false
+        layers.acceleration.force-enabled: false
+        pdfjs.disabled: true
+        security.ssl.enable_ocsp_stapling: false
     systemProperties:
-      - key: webdriver.firefox.logfile
-        value: /dev/null # This essentially disables logging for Firefox, but will only work for Unix/Linux based devices
+      webdriver.firefox.logfile: /dev/null # This essentially disables logging for Firefox, but will only work for Unix/Linux based devices
 
   - name: edge-desktop
     description: "Windows Edge browser running in headless mode."
     driver:
-      framework: selenium
-      capabilities:
-        - key: browser.name
-          value: edge
+      name: edge
       arguments:
         - "--headless"
         - "--disable-gpu"
         - "--ignore-certificate-errors"
         - "--start-fullscreen"
-      preferences:
-         - key: plugins.always_open_pdf_externally
-           value: true
-         - key: download.prompt_for_download
-           value: false
-         - key: download.directory_upgrade
-           value: true
+      experimentalOptions:
+        prefs:
+          plugins.always_open_pdf_externally: true
+          download.prompt_for_download: false
+          download.directory_upgrade: true
 
   - name: iphone-12-browserstack
     description: "iPhone 12 remote driver that utilizes BrowserStack."
     driver:
-      framework: browserstack
+      name: browserstack
       capabilities:
-        - key: os_version
-          value: 14
-        - key: device
-          value: iPhone 12
-        - key: real_mobile
-          value: true
-        - key: project
-          value: group-engagement
+        os_version: 14
+        device: iPhone 12
+        real_mobile: true
+        project: group-engagement
 
   - name: iphone-12-appium
     driver:
-      framework: appium
+      name: appium
       capabilities:
-        - key: platformName
-          value: iOS
-        - key: platformVersion
-          value: 14.3
-        - key: deviceName
-          value: iPhone 12
-        - key: browserName
-          value: Safari
-        - key: automationName
-          value: XCUITest
+        platformName: iOS
+        platformVersion: 14.3
+        deviceName: iPhone 12
+        browserName: Safari
+        automationName: XCUITest
 
   - name: pixel-4-appium
     driver:
-      framework: appium
+      name: appium
       capabilities:
-        - key: platformName
-          value: Android
-        - key: platformVersion
-          value: 11.0
-        - key: deviceName
-          value: Pixel 4
-        - key: browserName
-          value: Chrome
-        - key: avd
-          value: pixel_4
-        - key: automationName
-          value: UiAutomator2
+        platformName: Android
+        platformVersion: 11.0
+        deviceName: Pixel 4
+        browserName: Chrome
+        avd: pixel_4
+        automationName: UiAutomator2
