@@ -241,12 +241,12 @@ public class PageObject {
      * sparingly. If possible, you should be using a wait with an early exit condition instead of
      * relying on static wait times.
      *
-     * @param seconds - The time in seconds that we should wait for.
+     * @param millis - The time in seconds that we should wait for.
      */
-    public void waitFor(int seconds) {
-        logger.traceEntry(() -> seconds);
+    public void waitFor(long millis) {
+        logger.traceEntry(() -> millis);
         try {
-            Thread.sleep(seconds);
+            Thread.sleep(millis);
         } catch (InterruptedException e) {
             logger.error(e);
             e.printStackTrace();

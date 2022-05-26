@@ -3,11 +3,14 @@ package ca.empire.setup;
 import ca.empire.setup.configuration.models.Mapping;
 import ca.empire.setup.configuration.models.Driver;
 import ca.empire.util.TestEnvironment;
+import io.appium.java_client.android.AndroidDriver;
+import io.appium.java_client.ios.IOSDriver;
 import io.cucumber.java.Scenario;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.PageLoadStrategy;
+import org.openqa.selenium.Platform;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.edge.EdgeDriver;
@@ -31,8 +34,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /** Factory for supported web drivers. */
 public class DriverFactory {
     private static final HashMap<SupportedBrowsers, Boolean> driverSetups = new HashMap<>();
-    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(true);
-
+    private static final ReentrantReadWriteLock driverSetupLock = new ReentrantReadWriteLock(true);
     private static final Logger logger = LogManager.getLogger(DriverFactory.class);
 
     private enum SupportedBrowsers {
@@ -147,9 +149,36 @@ public class DriverFactory {
      */
     private static DriverDecorator createAppiumDriver(Driver driver) {
         logger.traceEntry(() -> driver);
-        /* ... */
-        logger.traceExit();
-        throw new UnsupportedOperationException("firefox drivers have not been implemented yet.");
+
+        DesiredCapabilities caps = new DesiredCapabilities();
+
+        for (Mapping capability : driver.capabilities) {
+            logger.debug("Setting capability - " + capability.key + ":" + capability.value);
+            caps.setCapability(capability.key, capability.value);
+        }
+
+        Platform platformName = caps.getPlatformName();
+        DriverDecorator driverDecorator = new DriverDecorator().setUuid(UUID.randomUUID());
+        URL appiumUrl;
+
+        try {
+            appiumUrl = new URL(Hooks.getTestEnvironment().get("APPIUM_SERVER_URL"));
+        } catch (MalformedURLException e) {
+            logger.error(e);
+            return null;
+        }
+
+        switch (platformName) {
+            case ANDROID:
+                driverDecorator.setDriver(new AndroidDriver(appiumUrl, caps));
+                break;
+            case IOS:
+                driverDecorator.setDriver(new IOSDriver(appiumUrl, caps));
+                break;
+        }
+
+        logger.traceExit(driverDecorator);
+        return driverDecorator;
     }
 
     /**
@@ -231,12 +260,12 @@ public class DriverFactory {
                 "download.default_directory",
                 driverDecorator.getDownloadDirectory().getAbsolutePath());
 
-        lock.readLock().lock();
+        driverSetupLock.readLock().lock();
         Boolean isSetup = driverSetups.get(browserName);
-        lock.readLock().unlock();
+        driverSetupLock.readLock().unlock();
 
         if (!isSetup) {
-            lock.writeLock().lock();
+            driverSetupLock.writeLock().lock();
             logger.info("Attempting to setup ChromeDriver...");
             // Double check that it hasn't already been setup while waiting to acquire the write
             // lock
@@ -258,7 +287,7 @@ public class DriverFactory {
                 logger.info("ChromeDriver was setup while waiting for write lock.");
             }
 
-            lock.writeLock().unlock();
+            driverSetupLock.writeLock().unlock();
         }
 
         ChromeOptions options =
@@ -288,13 +317,13 @@ public class DriverFactory {
             caps.put(capability.key.toLowerCase(), capability.value.toLowerCase());
         }
 
-        lock.readLock().lock();
+        driverSetupLock.readLock().lock();
         Boolean isSetup = driverSetups.get(browserName);
-        lock.readLock().unlock();
+        driverSetupLock.readLock().unlock();
 
         if (!isSetup) {
-            lock.writeLock().lock();
-            logger.info("Attempting to setup " + browserName +  "...");
+            driverSetupLock.writeLock().lock();
+            logger.info("Attempting to setup " + browserName + "...");
             // Double check that it hasn't already been setup while waiting to acquire the write
             // lock
             if (!driverSetups.get(browserName)) {
@@ -315,7 +344,7 @@ public class DriverFactory {
                 logger.info(browserName + " was setup while waiting for write lock.");
             }
 
-            lock.writeLock().unlock();
+            driverSetupLock.writeLock().unlock();
         }
 
         DriverDecorator driverDecorator = new DriverDecorator().setUuid(UUID.randomUUID());
@@ -335,11 +364,10 @@ public class DriverFactory {
         }
 
         FirefoxOptions options =
-                new FirefoxOptions()
-                        .addArguments(driverProfile.arguments)
-                        .setProfile(profile);
+                new FirefoxOptions().addArguments(driverProfile.arguments).setProfile(profile);
 
-        options.addPreference("browser.download.dir", driverDecorator.getDownloadDirectory().getAbsolutePath());
+        options.addPreference(
+                "browser.download.dir", driverDecorator.getDownloadDirectory().getAbsolutePath());
         options.setPageLoadStrategy(PageLoadStrategy.NORMAL);
         driverDecorator.setDriver(new FirefoxDriver(options));
 
@@ -382,13 +410,13 @@ public class DriverFactory {
                 "download.default_directory",
                 driverDecorator.getDownloadDirectory().getAbsolutePath());
 
-        lock.readLock().lock();
+        driverSetupLock.readLock().lock();
         Boolean isSetup = driverSetups.get(browserName);
-        lock.readLock().unlock();
+        driverSetupLock.readLock().unlock();
 
         if (!isSetup) {
-            lock.writeLock().lock();
-            logger.info("Attempting to setup " + browserName +  "...");
+            driverSetupLock.writeLock().lock();
+            logger.info("Attempting to setup " + browserName + "...");
             // Double check that it hasn't already been setup while waiting to acquire the write
             // lock
             if (!driverSetups.get(browserName)) {
@@ -409,7 +437,7 @@ public class DriverFactory {
                 logger.info(browserName + " was setup while waiting for write lock.");
             }
 
-            lock.writeLock().unlock();
+            driverSetupLock.writeLock().unlock();
         }
 
         EdgeOptions options =

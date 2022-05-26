@@ -270,7 +270,6 @@ public class Hooks {
         testEnvironments.remove();
 
         if (driverDecorators.get() != null) {
-            //getDriver().close();
             getDriver().quit();
             driverDecorators.remove();
         }

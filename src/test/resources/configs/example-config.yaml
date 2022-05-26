@@ -132,8 +132,27 @@ profiles:
         - key: platformName
           value: iOS
         - key: platformVersion
-          value: 14
+          value: 14.3
         - key: deviceName
           value: iPhone 12
+        - key: browserName
+          value: Safari
         - key: automationName
           value: XCUITest
+
+  - name: pixel-4-appium
+    driver:
+      framework: appium
+      capabilities:
+        - key: platformName
+          value: Android
+        - key: platformVersion
+          value: 11.0
+        - key: deviceName
+          value: Pixel 4
+        - key: browserName
+          value: Chrome
+        - key: avd
+          value: pixel_4
+        - key: automationName
+          value: UiAutomator2
