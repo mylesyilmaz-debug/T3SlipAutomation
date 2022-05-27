@@ -1,7 +1,6 @@
 package ca.empire.setup.configuration;
 
 import ca.empire.setup.configuration.models.Configuration;
-import ca.empire.setup.configuration.models.Mapping;
 import ca.empire.setup.configuration.models.Profile;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -34,7 +33,7 @@ public class Config {
                     "The provided file " + configYaml.getPath() + " does not exist.");
         } else if (!configYaml.isFile()) {
             throw new IllegalArgumentException(
-                    "The provided file " + configYaml.getPath() + " is a directory.");
+                    "The provided file " + configYaml.getPath() + " is not a file.");
         }
 
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
@@ -67,21 +66,12 @@ public class Config {
 
         logger.info("Profile found! " + profile.name + " - " + profile.description);
 
-        ArrayList<Mapping> systemProperties = new ArrayList<>();
-
-        if (configurationModel.systemProperties != null && profile.systemProperties != null) {
-            systemProperties.addAll(configurationModel.systemProperties);
-            systemProperties.addAll(profile.systemProperties);
-
-        } else if (configurationModel.systemProperties != null) {
-            systemProperties.addAll(configurationModel.systemProperties);
-        } else if (profile.systemProperties != null) {
-            systemProperties.addAll(profile.systemProperties);
+        if (configurationModel.systemProperties != null) {
+            configurationModel.systemProperties.forEach(System::setProperty);
         }
 
-        for (Mapping mapping : systemProperties) {
-            logger.info("Setting system property - " + mapping.key + ":" + mapping.value);
-            System.setProperty(mapping.key, mapping.value);
+        if (profile.systemProperties != null) {
+            profile.systemProperties.forEach(System::setProperty);
         }
 
         logger.traceExit();

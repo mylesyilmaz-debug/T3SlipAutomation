@@ -1,9 +1,9 @@
 # Tasks that need to be done
 
-- [ ] Implement Appium
-- [ ] Implement remaining browser drivers:
-    - [ ] Firefox
-    - [ ] Edge
+- [x] Implement Appium
+- [x] Implement remaining browser drivers:
+    - [x] Firefox
+    - [x] Edge
 - [x] Finalize configuration structure
 - [x] Verify ReportPortal implementation
 - [ ] Update ReportPortal file attachments

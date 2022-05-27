@@ -1,0 +1,5 @@
+<configuration>
+    <logger name="org.openqa.selenium" level="WARN"/>
+    <logger name="io.cucumber.java" level="WARN"/>
+    <logger name="org.asynchttpclient.netty" level="WARN"/>
+</configuration>

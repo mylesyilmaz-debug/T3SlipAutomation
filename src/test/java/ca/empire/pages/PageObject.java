@@ -18,8 +18,10 @@ public class PageObject {
 
     private static final Logger logger = LogManager.getLogger(PageObject.class);
 
-    protected static final int DEFAULT_WAIT_TIME = 10;
-    protected static final int DEFAULT_POLL_TIME = 1;
+    private static final int DEFAULT_WAIT_SECONDS = 10;
+    private static final int DEFAULT_POLL_SECONDS = 1;
+    protected static final Duration DEFAULT_WAIT_TIME = Duration.ofSeconds(DEFAULT_WAIT_SECONDS);
+    protected static final Duration DEFAULT_POLL_TIME = Duration.ofSeconds(DEFAULT_POLL_SECONDS);
 
     /*
     ====================================================================================================================
@@ -37,7 +39,7 @@ public class PageObject {
     /** Used to setup and initialize anything related to the PageFactory. */
     private void initFactory() {
         logger.traceEntry();
-        AjaxElementLocatorFactory ajaxFactory = new AjaxElementLocatorFactory(driver, 1);
+        AjaxElementLocatorFactory ajaxFactory = new AjaxElementLocatorFactory(driver, 10);
         PageFactory.initElements(ajaxFactory, this);
         logger.traceExit();
     }
@@ -122,7 +124,7 @@ public class PageObject {
 
     /**
      * Waits for an element to be visible before proceeding. This is accomplished by polling for the
-     * element every {@value this#DEFAULT_POLL_TIME} second(s) for {@value this#DEFAULT_WAIT_TIME}
+     * element every {@value this#DEFAULT_POLL_SECONDS} second(s) for {@value this#DEFAULT_WAIT_SECONDS}
      * second(s).
      *
      * @param element - The element to wait for.
@@ -139,10 +141,10 @@ public class PageObject {
      * @param maxWait - The maximum wait time that we should wait for.
      * @param pollTime - The amount of time in seconds between each poll.
      */
-    public void waitForVisible(WebElement element, int maxWait, int pollTime) {
+    public void waitForVisible(WebElement element, Duration maxWait, Duration pollTime) {
         logger.traceEntry(() -> element, () -> maxWait, () -> pollTime);
         new WebDriverWait(driver, maxWait)
-                .pollingEvery(Duration.ofSeconds(pollTime))
+                .pollingEvery(pollTime)
                 .ignoring(NoSuchElementException.class)
                 .until(ExpectedConditions.visibilityOf(element));
         logger.traceExit();
@@ -150,8 +152,8 @@ public class PageObject {
 
     /**
      * Waits for an element to be present in the DOM before proceeding. This is accomplished by
-     * polling for the element every {@value this#DEFAULT_POLL_TIME} second(s) for {@value
-     * this#DEFAULT_WAIT_TIME} second(s).
+     * polling for the element every {@value this#DEFAULT_POLL_SECONDS} second(s) for {@value
+     * this#DEFAULT_WAIT_SECONDS} second(s).
      *
      * @param xPath - The xPath pointing to the element to wait for.
      */
@@ -168,10 +170,10 @@ public class PageObject {
      * @param maxWait - The maximum wait time that we should wait for.
      * @param pollTime - The amount of time in seconds between each poll.
      */
-    public void waitForPresence(String xPath, int maxWait, int pollTime) {
+    public void waitForPresence(String xPath, Duration maxWait, Duration pollTime) {
         logger.traceEntry(() -> xPath, () -> maxWait, () -> pollTime);
         new WebDriverWait(driver, maxWait)
-                .pollingEvery(Duration.ofSeconds(pollTime))
+                .pollingEvery(pollTime)
                 .ignoring(NoSuchElementException.class)
                 .until(ExpectedConditions.presenceOfElementLocated(By.xpath(xPath)));
         logger.traceExit();
@@ -179,8 +181,8 @@ public class PageObject {
 
     /**
      * Waits for an element to be detached from the DOM before proceeding. This is accomplished by
-     * polling for the element every {@value this#DEFAULT_POLL_TIME} second(s) for {@value
-     * this#DEFAULT_WAIT_TIME} second(s).
+     * polling for the element every {@value this#DEFAULT_POLL_SECONDS} second(s) for {@value
+     * this#DEFAULT_WAIT_SECONDS} second(s).
      *
      * @param element - The element to wait for.
      */
@@ -197,10 +199,10 @@ public class PageObject {
      * @param maxWait - The maximum wait time that we should wait for.
      * @param pollTime - The amount of time in seconds between each poll.
      */
-    public void waitForStale(WebElement element, int maxWait, int pollTime) {
+    public void waitForStale(WebElement element, Duration maxWait, Duration pollTime) {
         logger.traceEntry(() -> element, () -> maxWait, () -> pollTime);
         new WebDriverWait(driver, maxWait)
-                .pollingEvery(Duration.ofSeconds(pollTime))
+                .pollingEvery(pollTime)
                 .ignoring(NoSuchElementException.class)
                 .until(ExpectedConditions.stalenessOf(element));
         logger.traceExit();
@@ -208,7 +210,7 @@ public class PageObject {
 
     /**
      * Waits for the element to be invisible. This is accomplished by polling for the element every
-     * {@value this#DEFAULT_POLL_TIME} second(s) for {@value this#DEFAULT_WAIT_TIME} second(s).
+     * {@value this#DEFAULT_POLL_SECONDS} second(s) for {@value this#DEFAULT_WAIT_SECONDS} second(s).
      *
      * @param element - The element to wait for.
      */
@@ -225,10 +227,10 @@ public class PageObject {
      * @param maxWait - The maximum wait time that we should wait for.
      * @param pollTime - The amount of time in seconds between each poll.
      */
-    public void waitForInvisible(WebElement element, int maxWait, int pollTime) {
+    public void waitForInvisible(WebElement element, Duration maxWait, Duration pollTime) {
         logger.traceEntry(() -> element, () -> maxWait, () -> pollTime);
         new WebDriverWait(driver, maxWait)
-                .pollingEvery(Duration.ofSeconds(pollTime))
+                .pollingEvery(pollTime)
                 .ignoring(NoSuchElementException.class)
                 .until(ExpectedConditions.invisibilityOf(element));
         logger.traceExit();
@@ -239,12 +241,12 @@ public class PageObject {
      * sparingly. If possible, you should be using a wait with an early exit condition instead of
      * relying on static wait times.
      *
-     * @param seconds - The time in seconds that we should wait for.
+     * @param millis - The time in seconds that we should wait for.
      */
-    public void waitFor(int seconds) {
-        logger.traceEntry(() -> seconds);
+    public void waitFor(long millis) {
+        logger.traceEntry(() -> millis);
         try {
-            Thread.sleep(seconds);
+            Thread.sleep(millis);
         } catch (InterruptedException e) {
             logger.error(e);
             e.printStackTrace();
