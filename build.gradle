@@ -19,7 +19,7 @@ repositories {
 def cucumber_version = '7.3.4'
 def selenium_version = "4.1.4"
 def rest_assured_version = "4.5.0"
-def driver_manager_version = '5.1.1'
+def driver_manager_version = '5.2.0'
 def appium_version = '8.0.0'
 def apache_poi_version = "5.0.0"
 def jackson_version = "2.13.3"

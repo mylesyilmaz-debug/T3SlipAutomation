@@ -10,7 +10,7 @@ defaultProfile: chrome-desktop
 profiles:
   - name: chrome-desktop-debug
     description: "Chrome desktop driver that is not headless. Mainly used for debuging purposes."
-    driver:
+    driverOptions:
       name: chrome
       arguments:
         - "--ignore-certificate-errors"
@@ -23,8 +23,10 @@ profiles:
 
   - name: chrome-desktop
     description: "Chrome desktop driver running in headless mode."
-    driver:
+    driverOptions:
       name: chrome
+      driverVersion: 101.0.4951.41
+      browserVersion: 101
       arguments:
         - "--headless"
         - "--disable-gpu"
@@ -40,7 +42,7 @@ profiles:
 
   - name: chrome-desktop-responsive
     description: "Chrome desktop driver using responsive mobile emulation."
-    driver:
+    driverOptions:
       name: chrome
       arguments:
         - "--headless"
@@ -61,7 +63,7 @@ profiles:
 
   - name: chrome-desktop-responsive-iphone-se
     description: "Chrome desktop driver using iPhone SE mobile emulation."
-    driver:
+    driverOptions:
       name: chrome
       arguments:
         - "--headless"
@@ -80,7 +82,7 @@ profiles:
 
   - name: firefox-desktop
     description: "FireFox driver running in headless mode."
-    driver:
+    driverOptions:
       name: firefox
       arguments:
         - "-headless"
@@ -106,7 +108,7 @@ profiles:
 
   - name: edge-desktop
     description: "Windows Edge browser running in headless mode."
-    driver:
+    driverOptions:
       name: edge
       arguments:
         - "--headless"
@@ -121,7 +123,7 @@ profiles:
 
   - name: iphone-12-browserstack
     description: "iPhone 12 remote driver that utilizes BrowserStack."
-    driver:
+    driverOptions:
       name: browserstack
       capabilities:
         os_version: 14
@@ -130,7 +132,7 @@ profiles:
         project: group-engagement
 
   - name: iphone-12-appium
-    driver:
+    driverOptions:
       name: appium
       capabilities:
         platformName: iOS
@@ -140,7 +142,7 @@ profiles:
         automationName: XCUITest
 
   - name: pixel-4-appium
-    driver:
+    driverOptions:
       name: appium
       capabilities:
         platformName: Android

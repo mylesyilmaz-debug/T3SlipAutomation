@@ -2,6 +2,7 @@ package ca.empire.setup;
 
 import ca.empire.setup.configuration.Config;
 import ca.empire.setup.configuration.models.Environment;
+import ca.empire.util.FileOperations;
 import ca.empire.util.TestEnvironment;
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
@@ -15,6 +16,7 @@ import org.openqa.selenium.WebDriver;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.UUID;
 import java.util.logging.Level;
 
 public class Hooks {
@@ -48,6 +50,17 @@ public class Hooks {
             logger.fatal("Exception occurred when loading config:", e);
             throw new RuntimeException(e.getCause());
         }
+
+        Runtime.getRuntime()
+                .addShutdownHook(
+                        new Thread(
+                                () -> {
+                                    logger.traceEntry();
+                                    FileOperations.deleteDir(
+                                            new File(System.getProperty("user.dir") + "/.temp"));
+                                    logger.traceExit();
+                                    LogManager.shutdown(true);
+                                }));
 
         logger.traceExit();
     }
@@ -105,7 +118,7 @@ public class Hooks {
     @Before(value = "not @api", order = 2)
     public void createDriver() {
         logger.traceEntry();
-        setDriverDecorator(DriverFactory.createDriver(config.getProfile().driver));
+        setDriverDecorator(DriverFactory.createDriver(config.getProfile().driverOptions));
 
         Scenario scenario = getScenario();
         logger.info(
@@ -116,6 +129,25 @@ public class Hooks {
                 scenario.getUri().toString(),
                 scenario.getLine());
 
+        logger.traceExit();
+    }
+
+    /**
+     * API tests still need access to a download directory in case they need to save a file for
+     * later use. This will create said download directory and the required DriverDecorator to store
+     * it.
+     *
+     * @throws IOException - If the download directory could not be created.
+     */
+    @Before(value = "@api", order = 3)
+    public void createApiDownloadDirectory() throws IOException {
+        logger.traceEntry();
+        UUID uuid = UUID.randomUUID();
+        DriverDecorator decorator =
+                new DriverDecorator()
+                        .setUuid(uuid)
+                        .setDownloadDirectory(FileOperations.generateTempDownloadDirectory(uuid));
+        setDriverDecorator(decorator);
         logger.traceExit();
     }
 
@@ -142,7 +174,7 @@ public class Hooks {
     }
 
     /**
-     * marks the the test result in BrowserStack
+     * marks the test result in BrowserStack
      *
      * @param scenario - The test scenario
      */
@@ -154,7 +186,7 @@ public class Hooks {
         String jsScript;
         Status testStatus;
 
-        if (!config.getProfile().driver.name.equals("browserstack")) {
+        if (!config.getProfile().driverOptions.name.equals("browserstack")) {
             return;
         }
 
@@ -187,7 +219,7 @@ public class Hooks {
                             + "\"status\": \"failed\", "
                             + "\"reason\": "
                             + "\"Test ended with status "
-                            + testStatus.toString()
+                            + testStatus
                             + "\""
                             + "}}";
         }
@@ -212,6 +244,12 @@ public class Hooks {
         File[] downloadedFiles = downloadDir.listFiles();
         long maxSize = (long) Math.pow(2, 23); // roughly 8MB
 
+        if (downloadedFiles == null) {
+            logger.warn("Attempting to retrieve the list of downloaded files returned a null.");
+            logger.traceExit();
+            return;
+        }
+
         for (File downloadedFile : downloadedFiles) {
             long size = downloadedFile.length();
 
@@ -225,27 +263,17 @@ public class Hooks {
             } else {
                 try {
                     byte[] fileBytes = Files.readAllBytes(downloadedFile.toPath());
+                    String mimeType = Files.probeContentType(downloadedFile.toPath());
 
                     scenario.attach(
-                            fileBytes, "application/octet-stream", downloadedFile.getName());
+                            fileBytes, mimeType, downloadedFile.getName());
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    logger.warn(e);
                 }
             }
-
-            if (!downloadedFile.delete()) {
-                logger.warn("Unable to delete " + downloadedFile.getAbsolutePath());
-            } else {
-                logger.info("Deleted " + downloadedFile.getAbsolutePath());
-            }
         }
 
-        if (!downloadDir.delete()) {
-            logger.warn("Unable to delete " + downloadDir.getAbsolutePath());
-        } else {
-            logger.info("Deleted " + downloadDir.getAbsolutePath());
-        }
-
+        FileOperations.deleteDir(downloadDir);
         logger.traceExit();
     }
 

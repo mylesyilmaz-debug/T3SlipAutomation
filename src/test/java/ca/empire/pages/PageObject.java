@@ -19,7 +19,7 @@ public class PageObject {
     private static final Logger logger = LogManager.getLogger(PageObject.class);
 
     private static final int DEFAULT_WAIT_SECONDS = 10;
-    private static final int DEFAULT_POLL_SECONDS = 10;
+    private static final int DEFAULT_POLL_SECONDS = 1;
     protected static final Duration DEFAULT_WAIT_TIME = Duration.ofSeconds(DEFAULT_WAIT_SECONDS);
     protected static final Duration DEFAULT_POLL_TIME = Duration.ofSeconds(DEFAULT_POLL_SECONDS);
 
@@ -39,7 +39,7 @@ public class PageObject {
     /** Used to setup and initialize anything related to the PageFactory. */
     private void initFactory() {
         logger.traceEntry();
-        AjaxElementLocatorFactory ajaxFactory = new AjaxElementLocatorFactory(driver, 1);
+        AjaxElementLocatorFactory ajaxFactory = new AjaxElementLocatorFactory(driver, 10);
         PageFactory.initElements(ajaxFactory, this);
         logger.traceExit();
     }

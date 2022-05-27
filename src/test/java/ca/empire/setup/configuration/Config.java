@@ -33,7 +33,7 @@ public class Config {
                     "The provided file " + configYaml.getPath() + " does not exist.");
         } else if (!configYaml.isFile()) {
             throw new IllegalArgumentException(
-                    "The provided file " + configYaml.getPath() + " is a directory.");
+                    "The provided file " + configYaml.getPath() + " is not a file.");
         }
 
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());

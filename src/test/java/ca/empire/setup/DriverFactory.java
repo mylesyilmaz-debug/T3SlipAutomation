@@ -1,7 +1,8 @@
 package ca.empire.setup;
 
 import ca.empire.exceptions.AutomationException;
-import ca.empire.setup.configuration.models.Driver;
+import ca.empire.setup.configuration.models.DriverOptions;
+import ca.empire.util.FileOperations;
 import ca.empire.util.TestEnvironment;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.ios.IOSDriver;
@@ -21,7 +22,6 @@ import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -62,13 +62,13 @@ public class DriverFactory {
     /**
      * Creates a WebDriver based on the provided driver profile.
      *
-     * @param driver - The driver profile that will be used to create the WebDriver.
+     * @param driverOptions - The driver profile that will be used to create the WebDriver.
      * @return - The WebDriver
      */
-    public static DriverDecorator createDriver(Driver driver) {
-        logger.traceEntry(() -> driver);
+    public static DriverDecorator createDriver(DriverOptions driverOptions) {
+        logger.traceEntry(() -> driverOptions);
 
-        String driverName = driver.name;
+        String driverName = driverOptions.name;
         DriverDecorator driverDecorator;
 
         if (driverName == null) {
@@ -80,19 +80,19 @@ public class DriverFactory {
 
         switch (SupportedDriver.valueOf(driverName)) {
             case browserstack:
-                driverDecorator = createBrowserStackDriver(driver);
+                driverDecorator = createBrowserStackDriver(driverOptions);
                 break;
             case appium:
-                driverDecorator = createAppiumDriver(driver);
+                driverDecorator = createAppiumDriver(driverOptions);
                 break;
             case chrome:
-                driverDecorator = createChromeDriver(driver);
+                driverDecorator = createChromeDriver(driverOptions);
                 break;
             case edge:
-                driverDecorator = createEdgeDriver(driver);
+                driverDecorator = createEdgeDriver(driverOptions);
                 break;
             case firefox:
-                driverDecorator = createFirefoxDriver(driver);
+                driverDecorator = createFirefoxDriver(driverOptions);
                 break;
             default:
                 // We really shouldn't get here
@@ -107,17 +107,17 @@ public class DriverFactory {
     }
 
     /**
-     * @param driver - The driver profile that represents a BrowserStack driver.
+     * @param driverOptions - The driver profile that represents a BrowserStack driver.
      * @return - The resulting BrowserStack driver.
      */
-    private static DriverDecorator createBrowserStackDriver(Driver driver) {
-        logger.traceEntry(() -> driver);
+    private static DriverDecorator createBrowserStackDriver(DriverOptions driverOptions) {
+        logger.traceEntry(() -> driverOptions);
 
         TestEnvironment environment = Hooks.getTestEnvironment();
         String browserStackUrl = environment.get("BROWSERSTACK_AUTOMATE_URL");
         DriverDecorator driverDecorator = new DriverDecorator().setUuid(UUID.randomUUID());
 
-        DesiredCapabilities caps = new DesiredCapabilities(driver.capabilities);
+        DesiredCapabilities caps = new DesiredCapabilities(driverOptions.capabilities);
         caps.setCapability("build", "build-" + factoryStartTime);
 
         // We want to have the final say on what the name will be
@@ -152,13 +152,13 @@ public class DriverFactory {
     }
 
     /**
-     * @param driver - The driver profile that represents an Appium driver.
+     * @param driverOptions - The driver profile that represents an Appium driver.
      * @return - The resulting AppiumDriver.
      */
-    private static DriverDecorator createAppiumDriver(Driver driver) {
-        logger.traceEntry(() -> driver);
+    private static DriverDecorator createAppiumDriver(DriverOptions driverOptions) {
+        logger.traceEntry(() -> driverOptions);
 
-        DesiredCapabilities caps = new DesiredCapabilities(driver.capabilities);
+        DesiredCapabilities caps = new DesiredCapabilities(driverOptions.capabilities);
         Platform platformName = caps.getPlatformName();
         DriverDecorator driverDecorator = new DriverDecorator().setUuid(UUID.randomUUID());
         URL appiumUrl;
@@ -184,19 +184,20 @@ public class DriverFactory {
     }
 
     /**
-     * @param driver - The driver profile that represents a ChromeDriver.
+     * @param driverOptions - The driver profile that represents a ChromeDriver.
      * @return - The resulting ChromeDriver.
      */
-    private static DriverDecorator createChromeDriver(Driver driver) {
-        logger.traceEntry(() -> driver);
-        trySetupDriver(SupportedDriver.chrome, driver.capabilities);
+    private static DriverDecorator createChromeDriver(DriverOptions driverOptions) {
+        logger.traceEntry(() -> driverOptions);
+        trySetupDriver(
+                SupportedDriver.chrome, driverOptions.driverVersion, driverOptions.browserVersion);
 
-        ChromeOptions options = new ChromeOptions().addArguments(driver.arguments);
+        ChromeOptions options = new ChromeOptions().addArguments(driverOptions.arguments);
         DriverDecorator driverDecorator = new DriverDecorator().setUuid(UUID.randomUUID());
 
         try {
             driverDecorator.setDownloadDirectory(
-                    generateTempDownloadDirectory(driverDecorator.getUuid()));
+                    FileOperations.generateTempDownloadDirectory(driverDecorator.getUuid()));
         } catch (IOException e) {
             logger.error(e);
             return null;
@@ -204,9 +205,13 @@ public class DriverFactory {
 
         Map<String, Object> experimentalOptions =
                 tryAddChromiumDownloadDirectory(
-                        driver.experimentalOptions,
+                        driverOptions.experimentalOptions,
                         driverDecorator.getDownloadDirectory().getAbsolutePath());
         experimentalOptions.forEach(options::setExperimentalOption);
+
+        if (driverOptions.capabilities != null) {
+            driverOptions.capabilities.forEach(options::setCapability);
+        }
 
         options.setPageLoadStrategy(PageLoadStrategy.NORMAL);
         driverDecorator.setDriver(new ChromeDriver(options));
@@ -216,18 +221,19 @@ public class DriverFactory {
     }
 
     /**
-     * @param driver - The driver profile that represents a FirefoxDriver.
+     * @param driverOptions - The driver profile that represents a FirefoxDriver.
      * @return - The resulting FirefoxDriver.
      */
-    private static DriverDecorator createFirefoxDriver(Driver driver) {
-        logger.traceEntry(() -> driver);
-        trySetupDriver(SupportedDriver.firefox, driver.capabilities);
+    private static DriverDecorator createFirefoxDriver(DriverOptions driverOptions) {
+        logger.traceEntry(() -> driverOptions);
+        trySetupDriver(
+                SupportedDriver.firefox, driverOptions.driverVersion, driverOptions.browserVersion);
 
         DriverDecorator driverDecorator = new DriverDecorator().setUuid(UUID.randomUUID());
 
         try {
             driverDecorator.setDownloadDirectory(
-                    generateTempDownloadDirectory(driverDecorator.getUuid()));
+                    FileOperations.generateTempDownloadDirectory(driverDecorator.getUuid()));
         } catch (IOException e) {
             logger.error(e);
             return null;
@@ -236,10 +242,15 @@ public class DriverFactory {
         FirefoxProfile profile = new FirefoxProfile();
         profile.setPreference(
                 "browser.download.dir", driverDecorator.getDownloadDirectory().getAbsolutePath());
-        driver.preferences.forEach(profile::setPreference);
+        driverOptions.preferences.forEach(profile::setPreference);
 
         FirefoxOptions options =
-                new FirefoxOptions().addArguments(driver.arguments).setProfile(profile);
+                new FirefoxOptions().addArguments(driverOptions.arguments).setProfile(profile);
+
+        if (driverOptions.capabilities != null) {
+            driverOptions.capabilities.forEach(options::setCapability);
+        }
+
         options.setPageLoadStrategy(PageLoadStrategy.NORMAL);
         driverDecorator.setDriver(new FirefoxDriver(options));
 
@@ -248,19 +259,20 @@ public class DriverFactory {
     }
 
     /**
-     * @param driver - The driver profile that represents a EdgeDriver.
+     * @param driverOptions - The driver profile that represents a EdgeDriver.
      * @return - The resulting EdgeDriver.
      */
-    private static DriverDecorator createEdgeDriver(Driver driver) {
-        logger.traceEntry(() -> driver);
-        trySetupDriver(SupportedDriver.edge, driver.capabilities);
+    private static DriverDecorator createEdgeDriver(DriverOptions driverOptions) {
+        logger.traceEntry(() -> driverOptions);
+        trySetupDriver(
+                SupportedDriver.edge, driverOptions.driverVersion, driverOptions.browserVersion);
 
         DriverDecorator driverDecorator = new DriverDecorator().setUuid(UUID.randomUUID());
-        EdgeOptions options = new EdgeOptions().addArguments(driver.arguments);
+        EdgeOptions options = new EdgeOptions().addArguments(driverOptions.arguments);
 
         try {
             driverDecorator.setDownloadDirectory(
-                    generateTempDownloadDirectory(driverDecorator.getUuid()));
+                    FileOperations.generateTempDownloadDirectory(driverDecorator.getUuid()));
         } catch (IOException e) {
             logger.error(e);
             return null;
@@ -268,9 +280,13 @@ public class DriverFactory {
 
         Map<String, Object> experimentalOptions =
                 tryAddChromiumDownloadDirectory(
-                        driver.experimentalOptions,
+                        driverOptions.experimentalOptions,
                         driverDecorator.getDownloadDirectory().getAbsolutePath());
         experimentalOptions.forEach(options::setExperimentalOption);
+
+        if (driverOptions.capabilities != null) {
+            driverOptions.capabilities.forEach(options::setCapability);
+        }
 
         options.setPageLoadStrategy(PageLoadStrategy.NORMAL);
         driverDecorator.setDriver(new EdgeDriver(options));
@@ -286,45 +302,15 @@ public class DriverFactory {
      */
 
     /**
-     * Generates a temporary download directory that can be used for a single driver instance.
-     *
-     * @param uuid - The UUID that will be used as the name of the directory.
-     * @return - The generated directory as a File.
-     * @throws IOException - If we are unable to generate the directory.
-     */
-    private static File generateTempDownloadDirectory(UUID uuid) throws IOException {
-        logger.traceEntry(() -> uuid);
-        String separator = File.separator;
-        String basePath =
-                System.getProperty("user.dir")
-                        + separator
-                        + ".temp"
-                        + separator
-                        + "downloads"
-                        + separator;
-
-        File directory = new File(basePath + uuid.toString());
-
-        if (!directory.mkdirs()) {
-            throw new IOException(
-                    "Unable to create download directory " + directory.getAbsolutePath());
-        }
-
-        logger.traceExit(directory);
-        return directory;
-    }
-
-    /**
      * Attempts to set up the driver using DriverManager. Will only do so if it hasn't already been
      * set up.
      *
      * @param supportedDriver - The driver that we will be setting up.
-     * @param capabilities - The capabilities for the driver. These capabilities will be checked for
-     *     a mapping to "browser.version" and will attempt to set up the mapped version.
+     * @param driverVersion - The desired version.
      */
     private static void trySetupDriver(
-            SupportedDriver supportedDriver, Map<String, Object> capabilities) {
-        logger.traceEntry(() -> supportedDriver, () -> capabilities);
+            SupportedDriver supportedDriver, String driverVersion, String browserVersion) {
+        logger.traceEntry(() -> supportedDriver, () -> driverVersion, () -> browserVersion);
 
         driverSetupLock.readLock().lock();
         Boolean isSetup = driverSetups.get(supportedDriver);
@@ -333,8 +319,7 @@ public class DriverFactory {
         if (!isSetup) {
             driverSetupLock.writeLock().lock();
             logger.info("Attempting to setup " + supportedDriver + "...");
-            // Double check that it hasn't already been setup while waiting to acquire the write
-            // lock
+            // Double check that it hasn't already been set up while waiting
             if (!driverSetups.get(supportedDriver)) {
                 try {
                     WebDriverManager manager;
@@ -357,10 +342,14 @@ public class DriverFactory {
                             throw e;
                     }
 
-                    if (capabilities != null && capabilities.containsKey("browser.version")) {
-                        manager =
-                                manager.browserVersion(
-                                        capabilities.get("browser.version").toString());
+                    if (driverVersion != null) {
+                        logger.info("Desired driver version: {}", driverVersion);
+                        manager = manager.driverVersion(driverVersion);
+                    }
+
+                    if (browserVersion != null) {
+                        logger.info("Desired browser version: {}", browserVersion);
+                        manager = manager.browserVersion(browserVersion);
                     }
 
                     manager.setup();
