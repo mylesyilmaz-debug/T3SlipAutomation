@@ -2,6 +2,66 @@
 
 This is a template testing framework that is capable of running multiple frontend tests in parallel.
 
+## Table of Contents
+
+- [Best Practices](#best-practices)
+  - [Logging](#logging)
+  - [Thread Safe Code](#thread-safe-code)
+  - [Creating Page Files](#creating-page-files)
+  - [Creating Step Definitions](#creating-step-definitions)
+  - [Documentation](#documentation)
+- [Project Structure](#project-structure)
+- [Handling Configuration](#handling-configuration)
+  - [VM Args](#vm-args)
+  - [File Discovery](#file-discovery)
+- [Config Structure](#config-structure)
+- [Running Tests](#running-tests)
+
+## Best Practices:
+
+### Logging:
+
+Although this test framework will likely never work with prod data, we need to respect 
+[The Personal Information Protection and Electronic Documents Act](https://www.priv.gc.ca/en/privacy-topics/privacy-laws-in-canada/the-personal-information-protection-and-electronic-documents-act-pipeda/) 
+(PIPEDA) rules and not log any Personally Identifiable Information (PII) directly into logs.
+
+This framework uses the [Log4j2](https://logging.apache.org/log4j/2.x/) library to handle logging. If possible, using
+`System.out.print...` should be avoided and the Log4j2 API should be used instead. When logging information, try to
+use the correct log level (i.e. don't use `logger.warn(...)` for something that should be `logger.debug(...)`) so that
+we can properly control the granularity of our logging.
+
+### Thread Safe Code:
+
+If you want to make use of parallel execution, you need to make sure that your code is thread safe and handles shared
+resources properly. It wouldn't be possible to cover thread safety in its entirety here, but the main idea is that
+access to shared resources should be controlled. Avoid the usage of `static` variables, pass data around using 
+method calls or `ca.empire.utils.TestEnvironment`, and make use of encapsulation to control read/write operations on 
+objects. For more information, check the links below:
+
+- https://en.wikipedia.org/wiki/Thread_safety
+- https://www.baeldung.com/java-thread-safety
+
+### Creating Page Files:
+
+All page files should derive from `ca.empire.pages.PageObject` so that they have access to important variables 
+(e.g. `driver`) and the generic methods that might be required when creating a page file (i.e. `click(...)`). This will
+also reduce the number of contact points with core of the framework which will help with maintainability in the event
+that the core of the framework needs to change for whatever reason. In the same vein, the page files should _try_ to
+avoid relying on external classes too much, though, some reliance on other classes and utilities is unavoidable.
+
+### Creating Step Definitions:
+
+Similar to our page files, make sure that all step definitions derive from `ca.empire.steps.StepDefinition`. This will
+give them access to the WebDriver, TestEnvironment and the download directory used by the WebDriver. Excluding
+additional utility classes and page files, this should give the step definitions access to all the core components that
+they need to execute tests.
+
+### Documentation:
+
+Try to include a [properly formatted](https://google.github.io/styleguide/javaguide.html#s7-javadoc) Javadoc with every
+public/protected member if appropriate. If the method expects certain values, make sure that those values are 
+sufficiently communicated in said Javadoc. Outside that, just add comments where its appropriate.
+
 ## Project Structure:
 
 ```

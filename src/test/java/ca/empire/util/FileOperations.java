@@ -11,6 +11,11 @@ import java.util.UUID;
 public class FileOperations {
     private static final Logger logger = LogManager.getLogger(FileOperations.class);
 
+    /**
+     * Deletes all files / subdirectories within a directory, and then deletes the directory itself. If symbolic links
+     * are found, then they will be left alone and will need to be manually actioned.
+     * @param file - The directory that will attempt to be deleted.
+     */
     public static void deleteDir(File file) {
         logger.traceEntry();
         File[] contents = file.listFiles();
