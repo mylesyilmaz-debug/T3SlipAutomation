@@ -16,6 +16,9 @@ public class GenericSteps extends StepDefinition {
         super();
     }
 
+    /**
+     * @param url - the URL that the driver will navigate to.
+     */
     @Given("I navigate to {string}")
     public void navigateTo(String url) {
         logger.traceEntry(() -> url);
