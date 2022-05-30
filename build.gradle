@@ -87,7 +87,8 @@ test {
     systemProperty "threads", System.getProperty("threads", "1")
 }
 
-tasks.register('cucumber') {
+task cucumber {
+    delete "./build"
     dependsOn assemble, testClasses
     outputs.upToDateWhen {false}
 
