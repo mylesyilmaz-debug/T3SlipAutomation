@@ -1,6 +1,7 @@
 package ca.empire.setup;
 
 import ca.empire.setup.configuration.Config;
+import ca.empire.setup.configuration.models.DownloadManagement;
 import ca.empire.setup.configuration.models.Environment;
 import ca.empire.util.FileOperations;
 import ca.empire.util.TestEnvironment;
@@ -8,13 +9,17 @@ import io.cucumber.java.After;
 import io.cucumber.java.Before;
 import io.cucumber.java.Scenario;
 import io.cucumber.java.Status;
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -39,9 +44,19 @@ public class Hooks {
         logger.info("config.filepath: " + configFilepath);
         logger.info("config.profile: " + configProfile);
 
+        // Utilize file discovery if no filepath was provided
         if (configFilepath.isEmpty()) {
-            logger.fatal("config.filepath was empty.");
-            throw new IllegalArgumentException();
+            final String DEFAULT_CONFIG_FILENAME = "frameworkConfig.yaml";
+            configFilepath = discoverConfigFile(DEFAULT_CONFIG_FILENAME);
+
+            if (configFilepath == null) {
+                logger.fatal(
+                        "config.filepath was empty and file discovery could not find {}",
+                        DEFAULT_CONFIG_FILENAME);
+                throw new IllegalArgumentException();
+            }
+
+            logger.info("Config file discovered: {}", configFilepath);
         }
 
         try {
@@ -51,16 +66,24 @@ public class Hooks {
             throw new RuntimeException(e.getCause());
         }
 
-        Runtime.getRuntime()
-                .addShutdownHook(
-                        new Thread(
-                                () -> {
-                                    logger.traceEntry();
-                                    FileOperations.deleteDir(
-                                            new File(System.getProperty("user.dir") + "/.temp"));
-                                    logger.traceExit();
-                                    LogManager.shutdown(true);
-                                }));
+        DownloadManagement.DeletionCondition deletionCondition =
+                config.getConfigurationModel().downloadManagement.deletionCondition;
+
+        // Create the shutdown hook to delete downloaded files if desired
+        if (deletionCondition == DownloadManagement.DeletionCondition.afterAll
+                || deletionCondition == DownloadManagement.DeletionCondition.afterEach) {
+            Runtime.getRuntime()
+                    .addShutdownHook(
+                            new Thread(
+                                    () -> {
+                                        logger.traceEntry();
+                                        FileOperations.deleteDir(
+                                                new File(
+                                                        System.getProperty("user.dir") + "/.temp"));
+                                        logger.traceExit();
+                                        LogManager.shutdown(true);
+                                    }));
+        }
 
         logger.traceExit();
     }
@@ -68,6 +91,56 @@ public class Hooks {
     public Hooks() {
         logger.traceEntry();
         logger.traceExit();
+    }
+
+    /*
+    ====================================================================================================================
+                                                            Utils
+    ====================================================================================================================
+     */
+
+    /**
+     * Attempts to discover a config file with a given name within the file structure of the
+     * project. This method will check at the root of the project, within the resources folder and
+     * within the resources/configs folder.
+     *
+     * @param expectedFilename - The filename of the config file that we are searching for.
+     * @return - The absolute path to the config file or null if the file was not found.
+     */
+    @SuppressWarnings("inline")
+    private static String discoverConfigFile(String expectedFilename) {
+        logger.traceEntry();
+        File configFile = new File("./" + expectedFilename);
+
+        if (configFile.exists()) {
+            logger.traceExit(configFile.getAbsolutePath());
+            return configFile.getAbsolutePath();
+        }
+
+        URL fileUrl = Hooks.class.getResource("/" + expectedFilename);
+
+        if (fileUrl != null) {
+            configFile = new File(fileUrl.getFile());
+
+            if (configFile.exists()) {
+                logger.traceExit(configFile.getAbsolutePath());
+                return configFile.getAbsolutePath();
+            }
+        }
+
+        fileUrl = Hooks.class.getResource("/configs/" + expectedFilename);
+
+        if (fileUrl != null) {
+            configFile = new File(fileUrl.getFile());
+
+            if (configFile.exists()) {
+                logger.traceExit(configFile.getAbsolutePath());
+                return configFile.getAbsolutePath();
+            }
+        }
+
+        logger.traceExit(null);
+        return null;
     }
 
     /*
@@ -89,7 +162,14 @@ public class Hooks {
         logger.traceEntry();
 
         Environment environment = getConfig().getConfigurationModel().environment;
-        String envFilepath = environment.filepath;
+        String envFilepath;
+
+        if (environment == null) {
+            envFilepath = null;
+        } else {
+            envFilepath = environment.filepath;
+        }
+
         TestEnvironment testEnvironment;
 
         if (envFilepath != null) {
@@ -162,14 +242,55 @@ public class Hooks {
     /* Standard Hooks */
 
     /**
-     * Takes a screenshot if the scenario failed.
+     * Takes a screenshot if the scenario did not pass.
      *
      * @param scenario - The test scenario
      */
     @After(order = 4)
     public void screenCapture(Scenario scenario) {
         logger.traceEntry();
-        /* ... */
+
+        if (getDriver() == null) {
+            logger.traceExit("Driver is null");
+            return;
+        } else if (scenario.getStatus() == Status.PASSED) {
+            logger.traceExit("Scenario has passed");
+            return;
+        }
+
+        TakesScreenshot screenshotDriver;
+
+        try {
+            screenshotDriver = (TakesScreenshot) getDriver();
+        } catch (ClassCastException e) {
+            logger.traceExit("Driver is unable to take screenshots");
+            return;
+        }
+
+        String filename = scenario.getId() + ".png";
+        File screenshotFile = screenshotDriver.getScreenshotAs(OutputType.FILE);
+
+        // Save screenshot locally
+        try {
+            File savedFile =
+                    new File("./build/testResults/" + scenario.getStatus() + "/" + filename);
+            FileUtils.copyFile(screenshotFile, savedFile);
+        } catch (IOException e) {
+            logger.warn(
+                    "An exception occurred while trying to save the screenshot: {}",
+                    e.getMessage());
+        }
+
+        // Attach screenshot to the scenario
+        try {
+            byte[] screenshotBytes = Files.readAllBytes(screenshotFile.toPath());
+            scenario.attach(screenshotBytes, "image/png", filename);
+        } catch (IOException e) {
+            logger.warn(
+                    "An exception occurred while trying to attach the screenshot: {}",
+                    e.getMessage());
+        }
+
         logger.traceExit();
     }
 
@@ -233,6 +354,7 @@ public class Hooks {
     public void deleteDownloadDirectory() {
         logger.traceEntry();
         File downloadDir = getDownloadDirectory();
+        DownloadManagement downloadManagement = config.getConfigurationModel().downloadManagement;
 
         if (downloadDir == null) {
             logger.info("This driver does not have any download directories associated with it.");
@@ -245,35 +367,48 @@ public class Hooks {
         long maxSize = (long) Math.pow(2, 23); // roughly 8MB
 
         if (downloadedFiles == null) {
-            logger.warn("Attempting to retrieve the list of downloaded files returned a null.");
+            logger.warn(
+                    "Attempting to retrieve the list of downloaded files returned a null value.");
             logger.traceExit();
             return;
         }
 
-        for (File downloadedFile : downloadedFiles) {
-            long size = downloadedFile.length();
+        // Check if we actually want to attach the file
+        DownloadManagement.AttachmentCondition condition = downloadManagement.attachmentCondition;
+        boolean attachFiles =
+                (condition == DownloadManagement.AttachmentCondition.failure && scenario.isFailed())
+                        || (condition == DownloadManagement.AttachmentCondition.unsuccessful
+                                && scenario.getStatus() != Status.PASSED)
+                        || condition == DownloadManagement.AttachmentCondition.always;
 
-            if (size > maxSize) {
-                double convertedSize = size / Math.pow(2, 20); // convert to MB
-                logger.warn(
-                        downloadedFile.getAbsolutePath()
-                                + " exceeds max size ("
-                                + convertedSize
-                                + "MB)");
-            } else {
-                try {
-                    byte[] fileBytes = Files.readAllBytes(downloadedFile.toPath());
-                    String mimeType = Files.probeContentType(downloadedFile.toPath());
+        if (attachFiles) {
+            for (File downloadedFile : downloadedFiles) {
+                long size = downloadedFile.length();
 
-                    scenario.attach(
-                            fileBytes, mimeType, downloadedFile.getName());
-                } catch (Exception e) {
-                    logger.warn(e);
+                if (size > maxSize) {
+                    double convertedSize = size / Math.pow(2, 20); // convert to MB
+                    logger.warn(
+                            downloadedFile.getAbsolutePath()
+                                    + " exceeds max size ("
+                                    + convertedSize
+                                    + "MB)");
+                } else {
+                    try {
+                        byte[] fileBytes = Files.readAllBytes(downloadedFile.toPath());
+                        String mimeType = Files.probeContentType(downloadedFile.toPath());
+
+                        scenario.attach(fileBytes, mimeType, downloadedFile.getName());
+                    } catch (Exception e) {
+                        logger.warn(e);
+                    }
                 }
             }
         }
 
-        FileOperations.deleteDir(downloadDir);
+        if (downloadManagement.deletionCondition
+                == DownloadManagement.DeletionCondition.afterEach) {
+            FileOperations.deleteDir(downloadDir);
+        }
         logger.traceExit();
     }
 
@@ -304,6 +439,13 @@ public class Hooks {
         testEnvironments.remove();
 
         if (driverDecorators.get() != null) {
+            try {
+                getDriver().close();
+            } catch (Exception e) {
+                logger.warn(
+                        "An exception occurred while trying to close the driver: {}",
+                        e.getMessage());
+            }
             getDriver().quit();
             driverDecorators.remove();
         }
@@ -319,6 +461,9 @@ public class Hooks {
     ====================================================================================================================
      */
 
+    /**
+     * @return the download directory assigned to this test runner.
+     */
     public static File getDownloadDirectory() {
         logger.traceEntry();
         File dir = driverDecorators.get().getDownloadDirectory();
@@ -326,6 +471,9 @@ public class Hooks {
         return dir;
     }
 
+    /**
+     * @return the driver assigned to this test runner.
+     */
     public static WebDriver getDriver() {
         logger.traceEntry();
         WebDriver driver = driverDecorators.get().getDriver();
@@ -333,24 +481,38 @@ public class Hooks {
         return driver;
     }
 
+    /**
+     * @return the test environment assigned to this test runner.
+     */
     public static TestEnvironment getTestEnvironment() {
         logger.traceEntry();
         logger.traceExit(testEnvironments.get());
         return testEnvironments.get();
     }
 
+    /**
+     * @return the scenario assigned to this test runner.
+     */
     public static Scenario getScenario() {
         logger.traceEntry();
         logger.traceExit(scenarios.get());
         return scenarios.get();
     }
 
+    /**
+     * @return the parsed configuration that is used by this program.
+     */
     public Config getConfig() {
         logger.traceEntry();
         logger.traceExit(config);
         return config;
     }
 
+    /**
+     * Sets the DriverDecorator that this test runner will use.
+     *
+     * @param driver The driver decorator that this test runner will use.
+     */
     private static void setDriverDecorator(DriverDecorator driver) {
         logger.traceEntry(() -> driver);
         driverDecorators.set(driver);

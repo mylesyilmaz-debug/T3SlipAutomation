@@ -4,6 +4,10 @@ environment:
   name: EXAMPLE
   filepath: "./environments/examples/example.env"
 
+downloadManagement:
+  deletionCondition: afterEach
+  attachmentCondition: unsuccessful
+
 defaultProfile: chrome-desktop
 
 # TODO: configure desired device profiles
@@ -31,6 +35,7 @@ profiles:
         - "--headless"
         - "--disable-gpu"
         - "--ignore-certificate-errors"
+        - "--window-size=1920,1080"
         - "--start-fullscreen"
       experimentalOptions:
         prefs:
