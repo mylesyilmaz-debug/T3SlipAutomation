@@ -10,6 +10,7 @@ import java.util.Map;
 
 public class Configuration implements Model {
     public final Environment environment;
+    public final DownloadManagement downloadManagement;
     public final String defaultProfile;
     public final Map<String, String> systemProperties;
     public final List<Profile> profiles;
@@ -19,15 +20,25 @@ public class Configuration implements Model {
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
     public Configuration(
             @JsonProperty("environment") Environment environment,
+            @JsonProperty(value = "downloadManagement") DownloadManagement downloadManagement,
             @JsonProperty("defaultProfile") String defaultProfile,
             @JsonProperty("systemProperties") Map<String, String> systemProperties,
-            @JsonProperty("profiles") List<Profile> profiles) {
+            @JsonProperty(value = "profiles", required = true) List<Profile> profiles) {
         logger.traceEntry(
-                () -> environment, () -> defaultProfile, () -> systemProperties, () -> profiles);
+                () -> environment, () -> downloadManagement, () -> defaultProfile, () -> systemProperties, () -> profiles);
+
+        DownloadManagement derivedDownloadManagement = downloadManagement;
+
+        // Default the download management if a configuration was not provided
+        if (derivedDownloadManagement == null) {
+            derivedDownloadManagement = new DownloadManagement("afterEach", "failure");
+        }
+
         this.environment = environment;
+        this.downloadManagement = derivedDownloadManagement;
         this.defaultProfile = defaultProfile;
         this.systemProperties = systemProperties;
         this.profiles = profiles;
-        logger.traceExit();
+        logger.traceExit(this);
     }
 }

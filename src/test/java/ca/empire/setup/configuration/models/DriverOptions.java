@@ -21,7 +21,7 @@ public class DriverOptions implements Model {
 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
     public DriverOptions(
-            @JsonProperty("name") String name,
+            @JsonProperty(value = "name", required = true) String name,
             @JsonProperty("driverVersion") String driverVersion,
             @JsonProperty("browserVersion") String browserVersion,
             @JsonProperty("capabilities") Map<String, Object> capabilities,

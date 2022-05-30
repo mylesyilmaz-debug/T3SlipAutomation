@@ -13,7 +13,8 @@ public class Environment implements Model {
 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
     public Environment(
-            @JsonProperty("name") String name, @JsonProperty("filepath") String filepath) {
+            @JsonProperty("name") String name,
+            @JsonProperty(value = "filepath", required = true) String filepath) {
         logger.traceEntry(() -> name, () -> filepath);
         this.name = name;
         this.filepath = filepath;

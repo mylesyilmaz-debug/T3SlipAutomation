@@ -17,9 +17,9 @@ public class Profile implements Model {
 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
     public Profile(
-            @JsonProperty("name") String name,
+            @JsonProperty(value = "name", required = true) String name,
             @JsonProperty("description") String description,
-            @JsonProperty("driver") DriverOptions driverOptions,
+            @JsonProperty(value = "driverOptions", required = true) DriverOptions driverOptions,
             @JsonProperty("systemProperties") Map<String, String> systemProperties) {
         logger.traceEntry(() -> name, () -> description, () -> driverOptions, () -> systemProperties);
         this.name = name;
