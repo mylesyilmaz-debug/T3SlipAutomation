@@ -19,6 +19,7 @@ import org.openqa.selenium.WebDriver;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -43,9 +44,19 @@ public class Hooks {
         logger.info("config.filepath: " + configFilepath);
         logger.info("config.profile: " + configProfile);
 
+        // Utilize file discovery if no filepath was provided
         if (configFilepath.isEmpty()) {
-            logger.fatal("config.filepath was empty.");
-            throw new IllegalArgumentException();
+            final String DEFAULT_CONFIG_FILENAME = "frameworkConfig.yaml";
+            configFilepath = discoverConfigFile(DEFAULT_CONFIG_FILENAME);
+
+            if (configFilepath == null) {
+                logger.fatal(
+                        "config.filepath was empty and file discovery could not find {}",
+                        DEFAULT_CONFIG_FILENAME);
+                throw new IllegalArgumentException();
+            }
+
+            logger.info("Config file discovered: {}", configFilepath);
         }
 
         try {
@@ -58,6 +69,7 @@ public class Hooks {
         DownloadManagement.DeletionCondition deletionCondition =
                 config.getConfigurationModel().downloadManagement.deletionCondition;
 
+        // Create the shutdown hook to delete downloaded files if desired
         if (deletionCondition == DownloadManagement.DeletionCondition.afterAll
                 || deletionCondition == DownloadManagement.DeletionCondition.afterEach) {
             Runtime.getRuntime()
@@ -83,6 +95,56 @@ public class Hooks {
 
     /*
     ====================================================================================================================
+                                                            Utils
+    ====================================================================================================================
+     */
+
+    /**
+     * Attempts to discover a config file with a given name within the file structure of the
+     * project. This method will check at the root of the project, within the resources folder and
+     * within the resources/configs folder.
+     *
+     * @param expectedFilename - The filename of the config file that we are searching for.
+     * @return - The absolute path to the config file or null if the file was not found.
+     */
+    @SuppressWarnings("inline")
+    private static String discoverConfigFile(String expectedFilename) {
+        logger.traceEntry();
+        File configFile = new File("./" + expectedFilename);
+
+        if (configFile.exists()) {
+            logger.traceExit(configFile.getAbsolutePath());
+            return configFile.getAbsolutePath();
+        }
+
+        URL fileUrl = Hooks.class.getResource("/" + expectedFilename);
+
+        if (fileUrl != null) {
+            configFile = new File(fileUrl.getFile());
+
+            if (configFile.exists()) {
+                logger.traceExit(configFile.getAbsolutePath());
+                return configFile.getAbsolutePath();
+            }
+        }
+
+        fileUrl = Hooks.class.getResource("/configs/" + expectedFilename);
+
+        if (fileUrl != null) {
+            configFile = new File(fileUrl.getFile());
+
+            if (configFile.exists()) {
+                logger.traceExit(configFile.getAbsolutePath());
+                return configFile.getAbsolutePath();
+            }
+        }
+
+        logger.traceExit(null);
+        return null;
+    }
+
+    /*
+    ====================================================================================================================
                                                         Before Hooks
     ====================================================================================================================
      */
@@ -100,7 +162,14 @@ public class Hooks {
         logger.traceEntry();
 
         Environment environment = getConfig().getConfigurationModel().environment;
-        String envFilepath = environment.filepath;
+        String envFilepath;
+
+        if (environment == null) {
+            envFilepath = null;
+        } else {
+            envFilepath = environment.filepath;
+        }
+
         TestEnvironment testEnvironment;
 
         if (envFilepath != null) {
@@ -298,11 +367,13 @@ public class Hooks {
         long maxSize = (long) Math.pow(2, 23); // roughly 8MB
 
         if (downloadedFiles == null) {
-            logger.warn("Attempting to retrieve the list of downloaded files returned a null value.");
+            logger.warn(
+                    "Attempting to retrieve the list of downloaded files returned a null value.");
             logger.traceExit();
             return;
         }
 
+        // Check if we actually want to attach the file
         DownloadManagement.AttachmentCondition condition = downloadManagement.attachmentCondition;
         boolean attachFiles =
                 (condition == DownloadManagement.AttachmentCondition.failure && scenario.isFailed())

@@ -1,7 +1,8 @@
 # selenium-cucumber-test-runner
- This is a template testing framework that is capable of running multiple frontend tests in parallel.
 
-## Project Structure
+This is a template testing framework that is capable of running multiple frontend tests in parallel.
+
+## Project Structure:
 
 ```
 .                                                   |
@@ -42,6 +43,7 @@
     │   │   └── ...                                 |< Other step defs should go here.
     │   └── util                                    |
     │       ├── BatchAssertion.java                 |< Used to assess multiple assertions at once.
+    │       └── FileOperations.java                 |< Some generic operations that can be performed in the file system.
     │       └── TestEnvironment.java                |< Stores environment variables and test data.
     │       └── ...                                 |< Any other utils should go here.
     └── resources                                   |
@@ -53,9 +55,27 @@
             └── ...                                 |< Feature files must go here.
 ```
 
+## Handling Configuration:
+
+The framework provides two different ways of handling configuration files. The first utilizes VM arguments to
+define the exact location of the configuration file that should be used, while the second relies on very basic file
+discovery.
+
+### VM Args:
+
+If you wish to use multiple config files, then this would be the best choice. You can use the VM argument
+`-Dconfig.filepath=<path>` where `<path>` is the path to the config file (either relative or absolute).
+
+### File Discovery:
+
+If you only plan on having a single config file, then this would be the best choice. All you need to do is create the
+file `frameworkConfig.yaml` in either the repo root, `./src/test/resources` or `src/test/resources/configs` and the
+framework will take care of the rest.
+
 ## Config Structure:
 
- For a working example, refer to `src/test/resources/configs/example-config.yaml`
+For a working example, refer to `src/test/resources/configs/frameworkConfig.yaml`
+
 ```yaml
 environment:                    #< (OPTIONAL) The object containing information about the test environment.
   filepath: <string>            #< The filepath that points to the .env file that will be used.
@@ -89,21 +109,24 @@ profiles:                       #< The list of driver profiles that are availabl
         ...                     #
   - ...                         #
                                 #
-defaultProfile: <string>        #< (OPTIONAL) The default profile that should be used in the event that none are provided.
+defaultProfile: <string>        #< (OPTIONAL) The default profile that should be used in the event that one is not provided in the VM args.
                                 #
 systemProperties:               #< (OPTIONAL) The list of system properties that should be set before running any tests. Will be overwritten by driver specific system properties.
   key: value                    #< The SystemProperty mapping that we want to set.
   ...                           #
 ```
 
-## Running Tests
+## Running Tests:
 
- The following command can be used to run tests:
- ```
+The following command can be used to run tests:
+
+ ```shell
  gradle cucumber -Dcucumber.filter.tags="..." -Dconfig.filepath="..." -Dconfig.profile="..." -Pthreads=...
  ```
- Where:
- - `-Dcucumber.filter.tags` = The tags of tests that should be run.
- - `-Dconfig.filepath` = The filepath pointing to the desired config file.
- - `-Dconfig.profile` = The driver profile from the provided config that should be use during testing.
- - `-Pthreads` = (OPTIONAL) The number of parallel workers that should be used during testing. Should be more than 0.
+
+Where:
+
+- `-Dcucumber.filter.tags` = The tags of tests that should be run.
+- `-Dconfig.filepath` = (OPTIONAL) The filepath pointing to the desired config file.
+- `-Dconfig.profile` = (OPTIONAL) The driver profile from the provided config that should be use during testing.
+- `-Pthreads` = (OPTIONAL) The number of parallel workers that should be used during testing. Should be more than 0.

@@ -6,7 +6,7 @@ environment:
 
 downloadManagement:
   deletionCondition: afterEach
-  attachmentCondition: failure
+  attachmentCondition: unsuccessful
 
 defaultProfile: chrome-desktop
 
