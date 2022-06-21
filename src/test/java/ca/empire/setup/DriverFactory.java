@@ -43,6 +43,7 @@ public class DriverFactory {
         firefox,
         edge,
         browserstack,
+        lambda,
         appium
     }
 
@@ -78,9 +79,14 @@ public class DriverFactory {
             throw e;
         }
 
-        switch (SupportedDriver.valueOf(driverName)) {
+        SupportedDriver supportedDriver = SupportedDriver.valueOf(driverName);
+
+        switch (supportedDriver) {
             case browserstack:
                 driverDecorator = createBrowserStackDriver(driverOptions);
+                break;
+            case lambda:
+                driverDecorator = createLambdaDriver(driverOptions);
                 break;
             case appium:
                 driverDecorator = createAppiumDriver(driverOptions);
@@ -112,15 +118,56 @@ public class DriverFactory {
      */
     private static DriverDecorator createBrowserStackDriver(DriverOptions driverOptions) {
         logger.traceEntry(() -> driverOptions);
+        TestEnvironment environment = Hooks.getTestEnvironment();
+        String driverUrl = environment.get("BROWSERSTACK_AUTOMATE_URL");
+
+        if (driverUrl == null || driverUrl.isEmpty()) {
+            IllegalArgumentException e =
+                    new IllegalArgumentException(
+                            "BROWSERSTACK_AUTOMATE_URL is either null, empty or missing from the environment.");
+            logger.error(e);
+            throw e;
+        }
+
+        DriverDecorator decorator =
+                createRemoteDriver(driverUrl, new DesiredCapabilities(driverOptions.capabilities));
+
+        logger.traceExit(decorator);
+        return decorator;
+    }
+
+    /**
+     * @param driverOptions - The driver profile that represents a LambdaTest driver.
+     * @return - The resulting LambdaTest driver.
+     */
+    private static DriverDecorator createLambdaDriver(DriverOptions driverOptions) {
+        logger.traceEntry(() -> driverOptions);
 
         TestEnvironment environment = Hooks.getTestEnvironment();
-        String browserStackUrl = environment.get("BROWSERSTACK_AUTOMATE_URL");
-        DriverDecorator driverDecorator = new DriverDecorator().setUuid(UUID.randomUUID());
+        String driverUrl = environment.get("LAMBDA_TEST_AUTOMATION_URL");
 
-        DesiredCapabilities caps = new DesiredCapabilities(driverOptions.capabilities);
+        if (driverUrl == null || driverUrl.isEmpty()) {
+            IllegalArgumentException e =
+                    new IllegalArgumentException(
+                            "LAMBDA_TEST_AUTOMATION_URL is either null, empty or missing from the environment.");
+            logger.error(e);
+            throw e;
+        }
+
+        DriverDecorator decorator =
+                createRemoteDriver(driverUrl, new DesiredCapabilities(driverOptions.capabilities));
+
+        logger.traceExit(decorator);
+        return decorator;
+    }
+
+    private static DriverDecorator createRemoteDriver(String driverUrl, DesiredCapabilities caps) {
+        logger.traceEntry(() -> "***", () -> caps);
+
+        DriverDecorator driverDecorator = new DriverDecorator().setUuid(UUID.randomUUID());
         caps.setCapability("build", "build-" + factoryStartTime);
 
-        // We want to have the final say on what the name will be
+        // We want to have the final say on what the runner name will be
         Scenario scenario = Hooks.getScenario();
         String threadName =
                 scenario.getName().toLowerCase().replaceAll("\\s", "-")
@@ -129,25 +176,17 @@ public class DriverFactory {
                         + "-uuid-"
                         + driverDecorator.getUuid();
         caps.setCapability("name", threadName);
-        logger.info("BrowserStack test name: {}", threadName);
-
-        if (browserStackUrl == null || browserStackUrl.isEmpty()) {
-            IllegalArgumentException e =
-                    new IllegalArgumentException(
-                            "BROWSERSTACK_AUTOMATE_URL is either null or empty.");
-            logger.error(e);
-            throw e;
-        }
+        logger.info("Test name: {}", threadName);
 
         try {
-            driverDecorator.setDriver(new RemoteWebDriver(new URL(browserStackUrl), caps));
+            driverDecorator.setDriver(new RemoteWebDriver(new URL(driverUrl), caps));
             logger.traceExit(driverDecorator);
             return driverDecorator;
         } catch (MalformedURLException e) {
             logger.error(e);
         }
 
-        logger.traceExit();
+        logger.traceExit(null);
         return null;
     }
 

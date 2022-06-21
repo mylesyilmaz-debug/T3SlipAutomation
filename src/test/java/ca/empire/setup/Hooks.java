@@ -9,6 +9,7 @@ import io.cucumber.java.After;
 import io.cucumber.java.Before;
 import io.cucumber.java.Scenario;
 import io.cucumber.java.Status;
+import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -294,25 +295,19 @@ public class Hooks {
         logger.traceExit();
     }
 
-    /**
-     * marks the test result in BrowserStack
-     *
-     * @param scenario - The test scenario
-     */
+    /** marks the test result in BrowserStack. */
     @After(order = 3)
-    public void markBrowserStackTestResult(Scenario scenario) {
+    public void markBrowserStackTestResult() {
         logger.traceEntry();
-
-        JavascriptExecutor jse;
-        String jsScript;
-        Status testStatus;
 
         if (!config.getProfile().driverOptions.name.equals("browserstack")) {
             return;
         }
 
-        jse = (JavascriptExecutor) getDriver();
-        testStatus = scenario.getStatus();
+        Scenario scenario = getScenario();
+        JavascriptExecutor jse = (JavascriptExecutor) getDriver();
+        Status testStatus = scenario.getStatus();
+        String jsScript;
 
         if (testStatus.equals(Status.PASSED)) {
             jsScript =
@@ -347,6 +342,19 @@ public class Hooks {
 
         jse.executeScript(jsScript);
         logger.traceExit();
+    }
+
+    /** Marks the test result in LambdaTest. */
+    @After(order = 3)
+    public void markLambdaTestResults() {
+        logger.traceEntry();
+
+        if (!config.getProfile().driverOptions.name.equals("lambda")) {
+            return;
+        }
+
+        ((JavascriptExecutor) getDriver())
+                .executeScript("lambda-status=" + getScenario().getStatus().name());
     }
 
     /** Attaches downloaded files to the scenario and then deletes them */
