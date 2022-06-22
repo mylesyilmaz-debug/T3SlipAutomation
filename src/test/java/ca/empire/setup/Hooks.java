@@ -447,14 +447,22 @@ public class Hooks {
         testEnvironments.remove();
 
         if (driverDecorators.get() != null) {
+            // Certain frameworks will allow you to get away with just closing the driver, others require you to quit
+            // and some require you to do both. Below acts as a catch-all without having to discern which is required.
             try {
                 getDriver().close();
             } catch (Exception e) {
-                logger.warn(
+                logger.debug(
                         "An exception occurred while trying to close the driver: {}",
                         e.getMessage());
             }
-            getDriver().quit();
+            try {
+                getDriver().quit();
+            } catch (Exception e) {
+                logger.debug(
+                        "An exception occurred while trying to quit the driver: {}",
+                        e.getMessage());
+            }
             driverDecorators.remove();
         }
 

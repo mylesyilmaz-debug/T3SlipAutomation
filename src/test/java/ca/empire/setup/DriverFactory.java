@@ -183,7 +183,7 @@ public class DriverFactory {
             logger.traceExit(driverDecorator);
             return driverDecorator;
         } catch (MalformedURLException e) {
-            logger.error(e);
+            logger.error("Error occurred when trying to connect to remote driver: {}", e.getMessage());
         }
 
         logger.traceExit(null);
@@ -205,7 +205,7 @@ public class DriverFactory {
         try {
             appiumUrl = new URL(Hooks.getTestEnvironment().get("APPIUM_SERVER_URL"));
         } catch (MalformedURLException e) {
-            logger.error(e);
+            logger.error("Error occurred when trying to connect to remote appium driver: {}", e.getMessage());
             return null;
         }
 

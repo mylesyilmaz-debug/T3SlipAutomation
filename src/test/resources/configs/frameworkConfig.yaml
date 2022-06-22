@@ -136,6 +136,15 @@ profiles:
         real_mobile: true
         project: group-engagement
 
+  - name: chrome-browserstack
+      driverOptions:
+        name: browserstack
+        capabilities:
+          os: "Windows"
+          os_version: "11"
+          browser: "chrome"
+          browser_version: "103.0 beta"
+
   - name: iphone-12-lambda
     description: "iPhone 12 remote driver that utilizes BrowserStack."
     driverOptions:
@@ -147,6 +156,14 @@ profiles:
         visual: true
         video: true
         console: true
+
+  - name: chrome-lambda
+    driverOptions:
+      name: lambda
+      capabilities:
+        platform: "Windows 11"
+        browserName: "Chrome"
+        version: "103.0"
 
   - name: iphone-12-appium
     driverOptions:
