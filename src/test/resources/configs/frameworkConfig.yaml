@@ -135,13 +135,13 @@ profiles:
         project: group-engagement
 
   - name: chrome-browserstack
-      driverOptions:
-        name: browserstack
-        capabilities:
-          os: "Windows"
-          os_version: "11"
-          browser: "chrome"
-          browser_version: "103.0 beta"
+    driverOptions:
+      name: browserstack
+      capabilities:
+        os: "Windows"
+        os_version: "11"
+        browser: "chrome"
+        browser_version: "103.0 beta"
 
   - name: iphone-12-lambda
     description: "iPhone 12 remote driver that utilizes LambdaTest."
