@@ -365,7 +365,7 @@ public class Hooks {
         DownloadManagement downloadManagement = config.getConfigurationModel().downloadManagement;
 
         if (downloadDir == null) {
-            logger.info("This driver does not have any download directories associated with it.");
+            logger.debug("This driver does not have any download directories associated with it.");
             logger.traceExit();
             return;
         }

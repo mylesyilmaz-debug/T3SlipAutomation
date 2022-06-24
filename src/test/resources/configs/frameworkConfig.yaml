@@ -13,7 +13,7 @@ defaultProfile: chrome-desktop
 # TODO: configure desired device profiles
 profiles:
   - name: chrome-desktop-debug
-    description: "Chrome desktop driver that is not headless. Mainly used for debuging purposes."
+    description: "Chrome desktop driver that is not headless. Mainly used for debugging purposes."
     driverOptions:
       name: chrome
       arguments:
@@ -29,8 +29,6 @@ profiles:
     description: "Chrome desktop driver running in headless mode."
     driverOptions:
       name: chrome
-      driverVersion: 101.0.4951.41
-      browserVersion: 101
       arguments:
         - "--headless"
         - "--disable-gpu"
@@ -146,7 +144,7 @@ profiles:
           browser_version: "103.0 beta"
 
   - name: iphone-12-lambda
-    description: "iPhone 12 remote driver that utilizes BrowserStack."
+    description: "iPhone 12 remote driver that utilizes LambdaTest."
     driverOptions:
       name: lambda
       capabilities:

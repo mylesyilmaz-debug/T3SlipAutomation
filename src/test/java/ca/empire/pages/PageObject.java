@@ -8,6 +8,7 @@ import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.PageFactory;
 import org.openqa.selenium.support.pagefactory.AjaxElementLocatorFactory;
 import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
@@ -18,7 +19,7 @@ public class PageObject {
 
     private static final Logger logger = LogManager.getLogger(PageObject.class);
 
-    private static final int DEFAULT_WAIT_SECONDS = 10;
+    private static final int DEFAULT_WAIT_SECONDS = 15;
     private static final int DEFAULT_POLL_SECONDS = 1;
     protected static final Duration DEFAULT_WAIT_TIME = Duration.ofSeconds(DEFAULT_WAIT_SECONDS);
     protected static final Duration DEFAULT_POLL_TIME = Duration.ofSeconds(DEFAULT_POLL_SECONDS);
@@ -36,7 +37,7 @@ public class PageObject {
         logger.traceExit();
     }
 
-    /** Used to setup and initialize anything related to the PageFactory. */
+    /** Used to set up and initialize anything related to the PageFactory. */
     private void initFactory() {
         logger.traceEntry();
         AjaxElementLocatorFactory ajaxFactory = new AjaxElementLocatorFactory(driver, 10);
@@ -115,7 +116,7 @@ public class PageObject {
             }
         }
 
-        // We really shouldn't reach this, but I am putting this here so we can at least return a
+        // We really shouldn't reach this, but I am including this, so we can at least return a
         // relative XPath...
         String relativePath = "//" + elementTag + currentPath;
         logger.traceExit(relativePath);
@@ -155,27 +156,27 @@ public class PageObject {
      * polling for the element every {@value this#DEFAULT_POLL_SECONDS} second(s) for {@value
      * this#DEFAULT_WAIT_SECONDS} second(s).
      *
-     * @param xPath - The xPath pointing to the element to wait for.
+     * @param by - The By method pointing to the element to wait for.
      */
-    public void waitForPresence(String xPath) {
-        logger.traceEntry(() -> xPath);
-        waitForPresence(xPath, DEFAULT_WAIT_TIME, DEFAULT_POLL_TIME);
+    public void waitForPresence(By by) {
+        logger.traceEntry(() -> by);
+        waitForPresence(by, DEFAULT_WAIT_TIME, DEFAULT_POLL_TIME);
         logger.traceExit();
     }
 
     /**
      * Waits for an element to be present in the DOM before proceeding.
      *
-     * @param xPath - The xPath pointing to the element to wait for.
+     * @param by - The By method pointing to the element to wait for.
      * @param maxWait - The maximum wait time that we should wait for.
      * @param pollTime - The amount of time in seconds between each poll.
      */
-    public void waitForPresence(String xPath, Duration maxWait, Duration pollTime) {
-        logger.traceEntry(() -> xPath, () -> maxWait, () -> pollTime);
+    public void waitForPresence(By by, Duration maxWait, Duration pollTime) {
+        logger.traceEntry(() -> by, () -> maxWait, () -> pollTime);
         new WebDriverWait(driver, maxWait)
                 .pollingEvery(pollTime)
                 .ignoring(NoSuchElementException.class)
-                .until(ExpectedConditions.presenceOfElementLocated(By.xpath(xPath)));
+                .until(ExpectedConditions.presenceOfElementLocated(by));
         logger.traceExit();
     }
 
@@ -349,12 +350,13 @@ public class PageObject {
      * simply use .click().
      *
      * @param element - The element to click on.
+     * @param withJs - Whether we want to use JS for clicking on the button
      */
-    public void click(WebElement element) {
+    public void click(WebElement element, boolean withJs) {
         logger.traceEntry(() -> element);
         scrollTo(element);
 
-        if (!checkJsExecutor()) {
+        if (!(withJs && checkJsExecutor())) {
             element.click();
             return;
         }
@@ -364,9 +366,9 @@ public class PageObject {
     }
 
     /**
-     * Double clicks on a given element.
+     * Double-click on a given element.
      *
-     * @param element - The element to double click.
+     * @param element - The element to double-click.
      */
     public void doubleClick(WebElement element) {
         logger.traceEntry(() -> element);
@@ -383,7 +385,7 @@ public class PageObject {
      */
     public void typeIn(WebElement element, String text, boolean clearText) {
         logger.traceEntry(() -> element, () -> text, () -> clearText);
-        click(element);
+        click(element, true);
 
         if (clearText) {
             element.clear();
@@ -418,5 +420,33 @@ public class PageObject {
         String value = element.getCssValue(cssProperty);
         logger.traceExit(value);
         return value;
+    }
+
+    /**
+     * Selects a value from a dropdown using the value code.
+     *
+     * @param element - The dropdown element.
+     * @param value - The value code for the desired selection.
+     */
+    public void selectDropdownByValue(WebElement element, String value) {
+        logger.traceEntry(() -> element, () -> value);
+        waitForVisible(element);
+        Select dropdown = new Select(element);
+        dropdown.selectByValue(value);
+        logger.traceExit();
+    }
+
+    /**
+     * Selects a value from a dropdown using the text from the selection.
+     *
+     * @param element - The dropdown element.
+     * @param text - The exact text for the desired selection.
+     */
+    public void selectDropdownByText(WebElement element, String text) {
+        logger.traceEntry(() -> element, () -> text);
+        waitForVisible(element);
+        Select dropdown = new Select(element);
+        dropdown.selectByValue(text);
+        logger.traceExit();
     }
 }

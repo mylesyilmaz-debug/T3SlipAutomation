@@ -176,7 +176,7 @@ public class DriverFactory {
                         + "-uuid-"
                         + driverDecorator.getUuid();
         caps.setCapability("name", threadName);
-        logger.info("Test name: {}", threadName);
+        logger.debug("Test name: {}", threadName);
 
         try {
             driverDecorator.setDriver(new RemoteWebDriver(new URL(driverUrl), caps));

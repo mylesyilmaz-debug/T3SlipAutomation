@@ -181,12 +181,13 @@ systemProperties:               #< (OPTIONAL) The list of system properties that
 The following command can be used to run tests:
 
  ```shell
- gradle cucumber -Dcucumber.filter.tags="..." -Dconfig.filepath="..." -Dconfig.profile="..." -Pthreads=...
+ gradle cucumber -Dcucumber.filter.tags="..."
  ```
 
-Where:
+All the possible arguments that can be used are listed below:
 
 - `-Dcucumber.filter.tags` = The tags of tests that should be run.
 - `-Dconfig.filepath` = (OPTIONAL) The filepath pointing to the desired config file.
 - `-Dconfig.profile` = (OPTIONAL) The driver profile from the provided config that should be use during testing.
-- `-Pthreads` = (OPTIONAL) The number of parallel workers that should be used during testing. Should be more than 0.
+- `-Prunner.profiles` = (OPTIONAL) The comma separated list of profiles that will be used to run tests. All profiles in this list will be run in the order they are provided. This will overwrite any profile set by `-Dconfig.profile`.
+- `-Prunner.threads` = (OPTIONAL) The number of parallel workers that should be used during testing. Should be more than 0.
