@@ -189,5 +189,13 @@ All the possible arguments that can be used are listed below:
 - `-Dcucumber.filter.tags` = The tags of tests that should be run.
 - `-Dconfig.filepath` = (OPTIONAL) The filepath pointing to the desired config file.
 - `-Dconfig.profile` = (OPTIONAL) The driver profile from the provided config that should be use during testing.
-- `-Prunner.profiles` = (OPTIONAL) The comma separated list of profiles that will be used to run tests. All profiles in this list will be run in the order they are provided. This will overwrite any profile set by `-Dconfig.profile`.
-- `-Prunner.threads` = (OPTIONAL) The number of parallel workers that should be used during testing. Should be more than 0.
+- `-Prunner.profiles` = (OPTIONAL) The comma separated list of profiles that will be used to run tests. All profiles 
+    in this list will be run in the order they are provided. This will overwrite any profile set by `-Dconfig.profile`.
+- `-Prunner.threads` = (OPTIONAL) The number of parallel workers that should be used during testing. 
+    Should be more than 0.
+
+If you want to run a specific test set using multiple different profiles, you can do so by leveraging the 
+`-Prunner.profiles` property. For example, if we use the following property: 
+`-Prunner.profiles="chrome-desktop, firefox-desktop, edge-desktop"`. Then the test runner will execute the provided test 
+set on the profiles `chrome-desktop`, `firefox-desktop`, and `edge-desktop` sequentially and in that order. Each test 
+set will track test results separately, although, the build will only succeed if all tests from all test sets have passed.
