@@ -1,6 +1,7 @@
 plugins {
     id 'java'
-    id "com.github.onslip.gradle-one-jar" version "1.0.6"
+    id 'groovy'
+    id 'com.github.onslip.gradle-one-jar' version '1.0.6'
 }
 
 group 'com.EmpireLife'
@@ -14,6 +15,10 @@ repositories {
     }
     mavenLocal()
     mavenCentral()
+}
+
+wrapper {
+    gradleVersion = '6.9.2'
 }
 
 def cucumber_version = '7.3.4'
@@ -120,7 +125,7 @@ task cucumber {
 
             profiles = profilesArg.split(",\\s*")
         } catch(MissingPropertyException e) {
-            profiles = null
+            profiles = new String[1]
         }
 
         String javaMain = "io.cucumber.core.cli.Main"
@@ -131,8 +136,10 @@ task cucumber {
                              '--threads', threads,
                              '--monochrome']
 
-        if (profiles != null && profiles.length > 0) {
-            for (String profile : profiles) {
+        boolean hasFailures = false
+
+        for (String profile : profiles) {
+            try {
                 javaexec {
                     systemProperty "config.profile", profile
                     systemProperty "parallel", parallel
@@ -144,19 +151,15 @@ task cucumber {
                     classpath = javaClasspath
                     args = javaArgs
                 }
+            } catch (GradleException e) {\
+                hasFailures = true
+                logger.info("Build for profile {} failed. This is likely the result of a failed test case.", profile)
+                logger.debug(e.getMessage())
             }
-        } else {
-            javaexec {
-                systemProperty "config.profile", System.getProperty("config.profile", "")
-                systemProperty "parallel", parallel
-                systemProperty "cucumber.options", System.getProperty("cucumber.options")
-                systemProperty "cucumber.filter.tags", System.getProperty("cucumber.filter.tags")
-                systemProperty "config.filepath", System.getProperty("config.filepath", "")
+        }
 
-                main = javaMain
-                classpath = javaClasspath
-                args = javaArgs
-            }
+        if (hasFailures) {
+            throw new GradleException("One or more of the test sets experianced a failure.")
         }
     }
 }
