@@ -189,9 +189,11 @@ All the possible arguments that can be used are listed below:
 - `-Dcucumber.filter.tags` = The tags of tests that should be run.
 - `-Dconfig.filepath` = (OPTIONAL) The filepath pointing to the desired config file.
 - `-Prunner.profiles` = (OPTIONAL) The comma separated list of profiles that will be used to run tests. All profiles 
-    in this list will be run in the order they are provided. This will overwrite any profile set by `-Dconfig.profile`.
-- `-Prunner.threads` = (OPTIONAL) The number of parallel workers that should be used during testing. 
+    in this list will be run in the order they are provided.
+- `-Prunner.threads` = (OPTIONAL, DEFAULT = `1`) The number of parallel workers that should be used during testing. 
     Should be more than 0.
+- `-Prunner.ignore.failures` = (OPTIONAL, DEFAULT = `false`) Whether failures should be ignored when executing the 
+    cucumber task.
 
 If you want to run a specific test set using multiple different profiles, you can do so by leveraging the 
 `-Prunner.profiles` property. For example, if we use the following property: 
