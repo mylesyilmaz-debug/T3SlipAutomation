@@ -13,12 +13,12 @@ defaultProfile: chrome-desktop
 # TODO: configure desired device profiles
 profiles:
   - name: chrome-desktop-debug
-    description: "Chrome desktop driver that is not headless. Mainly used for debuging purposes."
+    description: "Chrome desktop driver that is not headless. Mainly used for debugging purposes."
     driverOptions:
       name: chrome
       arguments:
         - "--ignore-certificate-errors"
-        - "--start-fullscreen"
+        - "--window-size=1280,720"
       experimentalOptions:
         prefs:
           plugins.always_open_pdf_externally: true
@@ -29,8 +29,6 @@ profiles:
     description: "Chrome desktop driver running in headless mode."
     driverOptions:
       name: chrome
-      driverVersion: 101.0.4951.41
-      browserVersion: 101
       arguments:
         - "--headless"
         - "--disable-gpu"
@@ -135,6 +133,35 @@ profiles:
         device: iPhone 12
         real_mobile: true
         project: group-engagement
+
+  - name: chrome-browserstack
+    driverOptions:
+      name: browserstack
+      capabilities:
+        os: "Windows"
+        os_version: "11"
+        browser: "chrome"
+        browser_version: "103.0 beta"
+
+  - name: iphone-12-lambda
+    description: "iPhone 12 remote driver that utilizes LambdaTest."
+    driverOptions:
+      name: lambda
+      capabilities:
+        platformName: iOS
+        deviceName: "iPhone 12"
+        network: true
+        visual: true
+        video: true
+        console: true
+
+  - name: chrome-lambda
+    driverOptions:
+      name: lambda
+      capabilities:
+        platform: "Windows 11"
+        browserName: "Chrome"
+        version: "103.0"
 
   - name: iphone-12-appium
     driverOptions:

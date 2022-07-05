@@ -1,6 +1,7 @@
 plugins {
     id 'java'
-    id "com.github.onslip.gradle-one-jar" version "1.0.6"
+    id 'groovy'
+    id 'com.github.onslip.gradle-one-jar' version '1.0.6'
 }
 
 group 'com.EmpireLife'
@@ -14,6 +15,10 @@ repositories {
     }
     mavenLocal()
     mavenCentral()
+}
+
+wrapper {
+    gradleVersion = '6.9.2'
 }
 
 def cucumber_version = '7.3.4'
@@ -93,30 +98,77 @@ task cucumber {
     outputs.upToDateWhen {false}
 
     doLast {
-        javaexec {
-            String threads = project.property("threads") == null ? "1" : project.property("threads")
-            int parsedThreads = Integer.parseInt(threads)
+        int threads
 
-            if (parsedThreads < 1) {
-                throw new IllegalArgumentException("Illegal number of threads: " + parsedThreads)
+        try {
+            threads = Integer.parseInt(project.property("runner.threads"))
+        } catch(MissingPropertyException e) {
+            threads = 1
+        }
+
+        boolean parallel = false
+
+        if (threads < 1) {
+            throw new IllegalArgumentException("Illegal number of threads: " + threads)
+        }
+        else if (threads > 1) {
+            parallel = true
+        }
+
+        boolean ignoreFailures
+
+        try {
+            ignoreFailures = Boolean.parseBoolean(project.property("runner.ignore.failures"))
+        } catch(MissingPropertyException e) {
+            ignoreFailures = false
+        }
+
+        String[] profiles
+
+        try {
+            String profilesArg = project.property("runner.profiles")
+
+            if (profilesArg.isEmpty()) {
+                throw new IllegalArgumentException("profiles is empty")
             }
-            else if (parsedThreads > 1) {
-                System.setProperty("parallel", "true")
+
+            profiles = profilesArg.split(",\\s*")
+        } catch(MissingPropertyException e) {
+            profiles = new String[1]
+        }
+
+        String javaMain = "io.cucumber.core.cli.Main"
+        FileCollection javaClasspath = configurations.cucumberRuntime + sourceSets.main.output + sourceSets.test.output
+        List<String> javaArgs = ['src/test/resources/feature',
+                             '--plugin', 'com.epam.reportportal.cucumber.ScenarioReporter',
+                             '--glue', 'ca.empire',
+                             '--threads', threads,
+                             '--monochrome']
+
+        boolean hasFailures = false
+
+        for (String profile : profiles) {
+            try {
+                javaexec {
+                    systemProperty "config.profile", profile
+                    systemProperty "parallel", parallel
+                    systemProperty "cucumber.options", System.getProperty("cucumber.options")
+                    systemProperty "cucumber.filter.tags", System.getProperty("cucumber.filter.tags")
+                    systemProperty "config.filepath", System.getProperty("config.filepath", "")
+
+                    main = javaMain
+                    classpath = javaClasspath
+                    args = javaArgs
+                }
+            } catch (GradleException e) {\
+                hasFailures = true
+                logger.info("Build for profile {} failed. This is likely the result of a failed test case.", profile)
+                logger.debug(e.getMessage())
             }
+        }
 
-            systemProperty "cucumber.options", System.getProperty("cucumber.options")
-            systemProperty "cucumber.filter.tags", System.getProperty("cucumber.filter.tags")
-            systemProperty "config.filepath", System.getProperty("config.filepath", "")
-            systemProperty "config.profile", System.getProperty("config.profile", "")
-            systemProperty "parallel", System.getProperty("parallel", "false")
-
-            main = "io.cucumber.core.cli.Main"
-            classpath = configurations.cucumberRuntime + sourceSets.main.output + sourceSets.test.output
-            args = ['src/test/resources/feature',
-                    '--plugin', 'com.epam.reportportal.cucumber.ScenarioReporter',
-                    '--glue', 'ca.empire',
-                    '--threads', threads,
-                    '--monochrome']
+        if (!ignoreFailures && hasFailures) {
+            throw new GradleException("One or more of the test sets experianced a failure.")
         }
     }
 }

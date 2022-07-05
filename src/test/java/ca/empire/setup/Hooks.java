@@ -9,6 +9,7 @@ import io.cucumber.java.After;
 import io.cucumber.java.Before;
 import io.cucumber.java.Scenario;
 import io.cucumber.java.Status;
+import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -294,25 +295,19 @@ public class Hooks {
         logger.traceExit();
     }
 
-    /**
-     * marks the test result in BrowserStack
-     *
-     * @param scenario - The test scenario
-     */
+    /** marks the test result in BrowserStack. */
     @After(order = 3)
-    public void markBrowserStackTestResult(Scenario scenario) {
+    public void markBrowserStackTestResult() {
         logger.traceEntry();
-
-        JavascriptExecutor jse;
-        String jsScript;
-        Status testStatus;
 
         if (!config.getProfile().driverOptions.name.equals("browserstack")) {
             return;
         }
 
-        jse = (JavascriptExecutor) getDriver();
-        testStatus = scenario.getStatus();
+        Scenario scenario = getScenario();
+        JavascriptExecutor jse = (JavascriptExecutor) getDriver();
+        Status testStatus = scenario.getStatus();
+        String jsScript;
 
         if (testStatus.equals(Status.PASSED)) {
             jsScript =
@@ -349,6 +344,19 @@ public class Hooks {
         logger.traceExit();
     }
 
+    /** Marks the test result in LambdaTest. */
+    @After(order = 3)
+    public void markLambdaTestResults() {
+        logger.traceEntry();
+
+        if (!config.getProfile().driverOptions.name.equals("lambda")) {
+            return;
+        }
+
+        ((JavascriptExecutor) getDriver())
+                .executeScript("lambda-status=" + getScenario().getStatus().name());
+    }
+
     /** Attaches downloaded files to the scenario and then deletes them */
     @After(order = 2)
     public void deleteDownloadDirectory() {
@@ -357,7 +365,7 @@ public class Hooks {
         DownloadManagement downloadManagement = config.getConfigurationModel().downloadManagement;
 
         if (downloadDir == null) {
-            logger.info("This driver does not have any download directories associated with it.");
+            logger.debug("This driver does not have any download directories associated with it.");
             logger.traceExit();
             return;
         }
@@ -439,14 +447,22 @@ public class Hooks {
         testEnvironments.remove();
 
         if (driverDecorators.get() != null) {
+            // Certain frameworks will allow you to get away with just closing the driver, others require you to quit
+            // and some require you to do both. Below acts as a catch-all without having to discern which is required.
             try {
                 getDriver().close();
             } catch (Exception e) {
-                logger.warn(
+                logger.debug(
                         "An exception occurred while trying to close the driver: {}",
                         e.getMessage());
             }
-            getDriver().quit();
+            try {
+                getDriver().quit();
+            } catch (Exception e) {
+                logger.debug(
+                        "An exception occurred while trying to quit the driver: {}",
+                        e.getMessage());
+            }
             driverDecorators.remove();
         }
 
