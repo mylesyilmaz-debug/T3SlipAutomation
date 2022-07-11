@@ -158,16 +158,19 @@ task cucumber {
         for (String profile : profiles) {
             try {
                 javaexec {
+                    String currentLaunchName = launchName
+
+                    // append profile onto launch if applicable
+                    if (appendProfile) {
+                        currentLaunchName = String.format("%s [profile: %s]", currentLaunchName, profile)
+                    }
+
                     systemProperty "config.profile", profile
                     systemProperty "parallel", parallel
                     systemProperty "cucumber.options", System.getProperty("cucumber.options")
                     systemProperty "cucumber.filter.tags", System.getProperty("cucumber.filter.tags")
                     systemProperty "config.filepath", System.getProperty("config.filepath", "")
-
-                    // append profile onto launch if applicable
-                    if (appendProfile) {
-                        systemProperty "rp.launch", String.format("%s [profile: %s]", launchName, profile)
-                    }
+                    systemProperty "rp.launch", currentLaunchName
 
                     main = javaMain
                     classpath = javaClasspath
