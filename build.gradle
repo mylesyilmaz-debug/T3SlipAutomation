@@ -98,14 +98,8 @@ task cucumber {
     outputs.upToDateWhen {false}
 
     doLast {
-        int threads
-
-        try {
-            threads = Integer.parseInt(project.property("runner.threads"))
-        } catch(MissingPropertyException e) {
-            threads = 1
-        }
-
+        // read in the number of threads and set parallel accordingly
+        int threads = Integer.parseInt(getProjectProperty("runner.threads", "1"))
         boolean parallel = false
 
         if (threads < 1) {
@@ -115,14 +109,7 @@ task cucumber {
             parallel = true
         }
 
-        boolean ignoreFailures
-
-        try {
-            ignoreFailures = Boolean.parseBoolean(project.property("runner.ignore.failures"))
-        } catch(MissingPropertyException e) {
-            ignoreFailures = false
-        }
-
+        // read in the profiles
         String[] profiles
 
         try {
@@ -137,13 +124,34 @@ task cucumber {
             profiles = new String[1]
         }
 
+        // if appending profile onto launch name, save current launch name so that it can be reused each launch
+        boolean appendProfile = Boolean.parseBoolean(getProjectProperty("rp.launch.append.profile", "true"))
+        String launchName = "default"
+
+        if (appendProfile) {
+            try {
+                InputStream is = new FileInputStream("src/test/resources/reportportal.properties")
+                Properties rpProps = new Properties()
+
+                rpProps.load(is)
+
+                if (rpProps.containsKey("rp.launch")) {
+                    launchName = rpProps.getProperty("rp.launch")
+                }
+            } catch (Exception e) {
+                logger.warn("Unable to load reportportal.properties")
+                logger.debug(e.getMessage())
+            }
+        }
+
+        // define our java exec variables
         String javaMain = "io.cucumber.core.cli.Main"
         FileCollection javaClasspath = configurations.cucumberRuntime + sourceSets.main.output + sourceSets.test.output
         List<String> javaArgs = ['src/test/resources/feature',
-                             '--plugin', 'com.epam.reportportal.cucumber.ScenarioReporter',
-                             '--glue', 'ca.empire',
-                             '--threads', threads,
-                             '--monochrome']
+                                 '--plugin', 'com.epam.reportportal.cucumber.ScenarioReporter',
+                                 '--glue', 'ca.empire',
+                                 '--threads', threads,
+                                 '--monochrome']
 
         boolean hasFailures = false
 
@@ -156,6 +164,11 @@ task cucumber {
                     systemProperty "cucumber.filter.tags", System.getProperty("cucumber.filter.tags")
                     systemProperty "config.filepath", System.getProperty("config.filepath", "")
 
+                    // append profile onto launch if applicable
+                    if (appendProfile) {
+                        systemProperty "rp.launch", String.format("%s [profile: %s]", launchName, profile)
+                    }
+
                     main = javaMain
                     classpath = javaClasspath
                     args = javaArgs
@@ -167,8 +180,31 @@ task cucumber {
             }
         }
 
+        // check if we want to ignore test failures during the build process
+        boolean ignoreFailures = Boolean.parseBoolean(getProjectProperty("runner.ignore.failures", "false"))
+
         if (!ignoreFailures && hasFailures) {
             throw new GradleException("One or more of the test sets experianced a failure.")
         }
     }
+}
+
+// UTIL METHODS
+
+/**
+ * Retrieves the desired Gradle Project property. If the property defined by {@code prop} is null, then we will return
+ * the value stored in {@code defaultValue}.
+ *
+ * @param prop The key of the property that we want to retrieve.
+ * @param defaultValue The default value to use in the case that there is no property with the key {@code prop}.
+ * @return The property stored in {@code prop}, or {@code defaultValue} if the property does not exist.
+ */
+def <T> T getProjectProperty(String prop, T defaultValue) {
+    T returnValue = project.findProperty(prop)
+
+    if (returnValue == null) {
+        return defaultValue
+    }
+
+    return returnValue
 }
