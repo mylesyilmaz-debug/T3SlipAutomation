@@ -194,6 +194,8 @@ All the possible arguments that can be used are listed below:
     Should be more than 0.
 - `-Prunner.ignore.failures` = (OPTIONAL, DEFAULT = `false`) Whether failures should be ignored when executing the 
     cucumber task.
+- `-Prp.launch.append.profile` = (OPTIONAL, DEFAULT = `true`) Whether the current profile should be appended to the 
+    launch name for Report Portal.
 
 If you want to run a specific test set using multiple different profiles, you can do so by leveraging the 
 `-Prunner.profiles` property. For example, if we use the following property: 
