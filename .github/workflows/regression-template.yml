@@ -8,7 +8,7 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: macos-10.15
 
     steps:
       # Checks out the repo to the local machine
@@ -20,6 +20,16 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
+
+      # Set up the required browsers
+      - name: Set up Chromium
+        uses: browser-actions/setup-chrome@latest
+
+      - name: Set up Firefox
+        uses: browser-actions/setup-firefox@latest
+
+      - name: Set up Edge
+        uses: browser-actions/setup-edge@latest
 
       # Generate the launch ref name that will be used in Report Portal
       - name: Generate launch ref name

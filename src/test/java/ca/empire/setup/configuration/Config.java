@@ -42,6 +42,7 @@ public class Config {
 
         String derivedProfileName =
                 profileName == null || profileName.isEmpty()
+                        || profileName.equalsIgnoreCase("defaultProfile")
                         ? configurationModel.defaultProfile
                         : profileName;
 

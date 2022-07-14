@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'groovy'
+    id 'java-library'
     id 'com.github.onslip.gradle-one-jar' version '1.0.6'
 }
 
@@ -110,7 +111,7 @@ task cucumber {
         }
 
         // read in the profiles
-        String[] profiles
+        List<String> profiles
 
         try {
             String profilesArg = project.property("runner.profiles")
@@ -119,9 +120,9 @@ task cucumber {
                 throw new IllegalArgumentException("profiles is empty")
             }
 
-            profiles = profilesArg.split(",\\s*")
+            profiles = Arrays.asList(profilesArg.split(",\\s*"))
         } catch(MissingPropertyException e) {
-            profiles = new String[1]
+            profiles = Arrays.asList("defaultProfile")
         }
 
         // if appending profile onto launch name, save current launch name so that it can be reused each launch
@@ -176,9 +177,13 @@ task cucumber {
                     classpath = javaClasspath
                     args = javaArgs
                 }
-            } catch (GradleException e) {\
+            } catch (GradleException e) {
                 hasFailures = true
                 logger.info("Build for profile {} failed. This is likely the result of a failed test case.", profile)
+                logger.debug(e.getMessage())
+            } catch (Exception e) {
+                hasFailures = true
+                logger.info("An unhandled exception occured while executing tests with the profile {}", profile)
                 logger.debug(e.getMessage())
             }
         }
