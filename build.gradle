@@ -82,6 +82,7 @@ dependencies {
     testImplementation group: 'org.assertj', name: 'assertj-core', version: '3.22.0'
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.8.2'
     testImplementation group: 'junit', name: 'junit', version: '4.13.2'
+    testImplementation group: 'com.github.lambdatest', name: 'lambdatest-tunnel-binary', version: '1.0.10'
 }
 
 test {
