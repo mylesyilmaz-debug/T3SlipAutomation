@@ -163,6 +163,15 @@ profiles:
         browserName: "Chrome"
         version: "103.0"
 
+  - name: chrome-lambda-tunnel
+    driverOptions:
+      name: lambda
+      capabilities:
+        platform: "Windows 11"
+        browserName: "Chrome"
+        version: "103.0"
+        tunnel: true
+
   - name: iphone-12-appium
     driverOptions:
       name: appium

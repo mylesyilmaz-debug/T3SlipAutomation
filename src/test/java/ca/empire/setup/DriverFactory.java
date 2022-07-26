@@ -4,6 +4,7 @@ import ca.empire.exceptions.AutomationException;
 import ca.empire.setup.configuration.models.DriverOptions;
 import ca.empire.util.FileOperations;
 import ca.empire.util.TestEnvironment;
+import com.lambdatest.tunnel.Tunnel;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.ios.IOSDriver;
 import io.cucumber.java.Scenario;
@@ -22,6 +23,7 @@ import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -36,7 +38,29 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class DriverFactory {
     private static final HashMap<SupportedDriver, Boolean> driverSetups = new HashMap<>();
     private static final ReentrantReadWriteLock driverSetupLock = new ReentrantReadWriteLock(true);
+    private static final ReentrantReadWriteLock tunnelSetupLock = new ReentrantReadWriteLock(true);
     private static final Logger logger = LogManager.getLogger(DriverFactory.class);
+
+    private static Tunnel tunnel = null;
+
+    static {
+        Runtime.getRuntime()
+                .addShutdownHook(
+                        new Thread(
+                                () -> {
+                                    logger.traceEntry();
+                                    if (tunnel != null) {
+                                        try {
+                                            logger.info("Attempting to shutdown tunnel...");
+                                            tunnel.stopTunnel();
+                                        } catch (Exception e) {
+                                            logger.error(e);
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                    logger.traceExit();
+                                }));
+    }
 
     private enum SupportedDriver {
         chrome,
@@ -152,6 +176,30 @@ public class DriverFactory {
                             "LAMBDA_TEST_AUTOMATION_URL is either null, empty or missing from the environment.");
             logger.error(e);
             throw e;
+        }
+
+        if (driverOptions.capabilities.containsKey("tunnel")
+                && driverOptions.capabilities.get("tunnel").toString().equalsIgnoreCase("true")) {
+            String tunnelUser = environment.get("LAMBDA_TUNNEL_USER");
+            String tunnelKey = environment.get("LAMBDA_TUNNEL_KEY");
+
+            if (tunnelUser == null || tunnelUser.isEmpty()) {
+                IllegalArgumentException e =
+                        new IllegalArgumentException(
+                                "LAMBDA_TUNNEL_USER is either null, empty or missing from the environment.");
+                logger.error(e);
+                throw e;
+            }
+
+            if (tunnelKey == null || tunnelKey.isEmpty()) {
+                IllegalArgumentException e =
+                        new IllegalArgumentException(
+                                "LAMBDA_TUNNEL_KEY is either null, empty or missing from the environment.");
+                logger.error(e);
+                throw e;
+            }
+
+            tryTunnelSetup(tunnelUser, tunnelKey);
         }
 
         DriverDecorator decorator =
@@ -341,6 +389,43 @@ public class DriverFactory {
      */
 
     /**
+     * Attempts to set up the tunnel for LambdaTest.
+     *
+     * @param username The username for the LambdaTest account
+     * @param key The key for the LambdaTest account
+     */
+    private static void tryTunnelSetup(String username, String key) {
+        logger.traceEntry(() -> username, () -> key);
+
+        tunnelSetupLock.readLock().lock();
+        boolean isSetup = tunnel != null;
+        tunnelSetupLock.readLock().unlock();
+
+        if (!isSetup) {
+            tunnelSetupLock.writeLock().lock();
+            logger.info("Attempting to setup tunnel...");
+
+            if (tunnel == null) {
+                try {
+                    tunnel = new Tunnel();
+
+                    HashMap<String, String> options = new HashMap<>();
+                    options.put("user", username);
+                    options.put("key", key);
+
+                    tunnel.start(options);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                logger.info("Tunnel was successfully setup.");
+            } else {
+                logger.info("Tunnel was setup while waiting for write lock.");
+            }
+            tunnelSetupLock.writeLock().unlock();
+        }
+    }
+
+    /**
      * Attempts to set up the driver using DriverManager. Will only do so if it hasn't already been
      * set up.
      *
@@ -352,7 +437,7 @@ public class DriverFactory {
         logger.traceEntry(() -> supportedDriver, () -> driverVersion, () -> browserVersion);
 
         driverSetupLock.readLock().lock();
-        Boolean isSetup = driverSetups.get(supportedDriver);
+        boolean isSetup = driverSetups.get(supportedDriver);
         driverSetupLock.readLock().unlock();
 
         if (!isSetup) {

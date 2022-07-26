@@ -353,8 +353,17 @@ public class Hooks {
             return;
         }
 
+        String reportedStatus = "other";
+        Status testStatus = getScenario().getStatus();
+
+        if (testStatus.equals(Status.PASSED)) {
+            reportedStatus = "passed";
+        } else if (testStatus.equals(Status.FAILED)) {
+            reportedStatus = "failed";
+        }
+
         ((JavascriptExecutor) getDriver())
-                .executeScript("lambda-status=" + getScenario().getStatus().name());
+                .executeScript("lambda-status=" + reportedStatus);
     }
 
     /** Attaches downloaded files to the scenario and then deletes them */
