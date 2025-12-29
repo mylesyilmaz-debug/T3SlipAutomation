@@ -6,8 +6,8 @@ import org.junit.runner.RunWith;
 
 @RunWith(Cucumber.class)
 @CucumberOptions(
-        features = {"src/test/resources/feature"},
-        glue = {"ca.empire"},
+        features = {"src/test/resources/features"},
+        glue = {"ca.empire.steps"},
         plugin = {"com.epam.reportportal.cucumber.ScenarioReporter"},
         monochrome = true)
 public class CucumberRunner {}

@@ -1,0 +1,17 @@
+package ca.empire.runner;
+
+import org.junit.runner.RunWith;
+import io.cucumber.junit.Cucumber;
+import io.cucumber.junit.CucumberOptions;
+
+@RunWith(Cucumber.class)
+@CucumberOptions(
+        features = "src/test/resources/features",
+        glue = {"ca.empire.steps","ca.empire.hooks"},
+        plugin = {
+                "pretty",
+                "html:target/cucumber-report.html"
+        }
+)
+public class DataValidationRunner {
+}

@@ -2,7 +2,7 @@ plugins {
     id 'java'
     id 'groovy'
     id 'java-library'
-    id 'com.github.onslip.gradle-one-jar' version '1.0.6'
+    //id 'com.github.onslip.gradle-one-jar' version '1.0.6'
 }
 
 group 'com.EmpireLife'
@@ -47,6 +47,8 @@ dependencies {
     testImplementation group: 'io.cucumber', name: 'cucumber-java', version: cucumber_version
     testImplementation group: 'io.cucumber', name: 'cucumber-junit', version: cucumber_version
     testImplementation group: 'io.cucumber', name: 'gherkin', version: '23.0.1'
+    testImplementation 'com.opencsv:opencsv:5.9'
+    testImplementation "com.ibm.db2:jcc:11.5.9.0"
 
     // ReportPortal
     testImplementation group: 'com.epam.reportportal', name: 'client-java', version: '5.1.4'
