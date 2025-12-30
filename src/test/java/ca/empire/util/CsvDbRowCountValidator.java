@@ -10,6 +10,8 @@ import java.sql.Statement;
 
 public class CsvDbRowCountValidator {
 
+    //Check if row counts matching DEL file vs DB table
+
     public static void main(String[] args) {
         String csvPath = "C:/Users/citmxy/Downloads/file.del";
         String dbUrl = "jdbc:db2://kgnmfdbmlt01.empire.ca:50111/DBIUA1";

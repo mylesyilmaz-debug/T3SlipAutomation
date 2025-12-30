@@ -1,9 +1,13 @@
 package ca.empire.util;
+import jdk.internal.org.jline.terminal.TerminalBuilder;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.sql.*;
 
 public class CsvDbSampleExistenceValidator {
+
+    //Check if data in DEL file exists in DB table , first 5 rows and first 6 columns
 
     private static void setStringOrNull(
             PreparedStatement ps,
@@ -57,7 +61,7 @@ public class CsvDbSampleExistenceValidator {
                         "      RTBL_STBL_1_CD = ?\n" +
                         "   OR (RTBL_STBL_1_CD IS NULL AND ? IS NULL)\n" +
                         "   OR (RTRIM(RTBL_STBL_1_CD) = '' AND ? IS NULL)\n" +
-                        ") ";
+                        ") " ;
 
 
         try (BufferedReader reader = new BufferedReader(new FileReader(delFilePath))) {
@@ -93,6 +97,7 @@ public class CsvDbSampleExistenceValidator {
 
 
                 PreparedStatement ps = conn.prepareStatement(sql);
+
                 ps.setString(1, c[0]); // CO_ID
                 ps.setString(2, c[1]); // RTBL_ID
                 ps.setString(3, c[2]); // RTBL_RT_TYP_CD
@@ -113,8 +118,12 @@ public class CsvDbSampleExistenceValidator {
                     System.out.println("❌ NOT FOUND IN DB → CO_ID=" + c[0] + ", RTBL_ID=" + c[1]);
                 }
                 if (existsInDb) {
-                    System.out.println("✅ FOUND IN DB → CO_ID=" + c[0] + ", RTBL_ID=" + c[1]);
-                }
+                    System.out.println("FOUND IN DB → CO_ID=" + c[0] + ", RTBL_ID=" + c[1]);
+
+
+
+                    }
+
 
                 processed++;
             }

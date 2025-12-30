@@ -8,6 +8,8 @@ import java.sql.ResultSet;
 
 public class DelVsDbValidatorV2 {
 
+    //DEL file vs DB data validation for all rows and 6 columns
+
     public static void main(String[] args) {
 
         String filePath = "C:/Users/citmxy/Downloads/file.del";
@@ -39,7 +41,10 @@ public class DelVsDbValidatorV2 {
                                 " | Columns=" + c.length +
                                 " | c[0]=" + c[0] +
                                 " | c[1]=" + c[1] +
-                                " | c[2]=" + c[2]
+                                " | c[2]=" + c[2] +
+                                " | c[3]=" + c[3] +
+                                " | c[4]=" + c[4] +
+                                " | c[5]=" + c[5]
                 );
 
                 String sql =

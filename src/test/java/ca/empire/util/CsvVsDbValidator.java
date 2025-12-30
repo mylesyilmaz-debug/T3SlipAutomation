@@ -10,10 +10,14 @@ import java.sql.Statement;
 import java.util.List;
 
 public class CsvVsDbValidator {
+
+    //negative scenario, data.csv vs DB matching or not , 3 rows 3 columns
+
     public static void main(String[] args) {
 
         try {
             runValidation();
+
         } catch (Exception e) {
             System.out.println("Validation finished with errors (expected for negative scenario)");
             e.printStackTrace();
@@ -47,26 +51,28 @@ public class CsvVsDbValidator {
             String csvName = csvRow[1];
             String csvRate = csvRow[2];
 
-            String sql = "SELECT name, rate FROM YOUR_TABLE WHERE id = " + csvId;
+            String sql = "SELECT CO_ID, RTBL_ID, RTBL_RT_TYP_CD from ipr1dba1.trt where prev_updt_user_id = 'S24211'";
             ResultSet rs = statement.executeQuery(sql);
 
             if (rs.next()) {
 
-                String dbName = rs.getString("name");
-                String dbRate = rs.getString("rate");
+                String coId = rs.getString("CO_ID");
+                String rtblId = rs.getString("RTBL_ID");
+                String rtblRtTypCd = rs.getString("RTBL_RT_TYP_CD");
 
-                System.out.println("ID: " + csvId);
-                System.out.println("CSV -> name=" + csvName + ", rate=" + csvRate);
-                System.out.println("DB  -> name=" + dbName + ", rate=" + dbRate);
+                System.out.println("CSV -> ID: " + csvId);
+                System.out.println("CSV -> name=" + csvName + ", CSV -> rate=" + csvRate);
+                System.out.println("DB  -> CoID=" + coId + ", DB -> rtbID =" + rtblId + ", DB -> rtblRtTypCd =" + rtblRtTypCd);
 
-                if (!csvName.equals(dbName) || !csvRate.equals(dbRate)) {
+                if (!csvName.equals(rtblId) || !csvRate.equals(rtblRtTypCd)) {
                     System.out.println("❌ MISMATCH FOUND");
                     allMatched = false;
                 } else {
                     System.out.println("✅ MATCH");
                 }
 
-            } else {
+            }
+            else {
                 System.out.println("❌ No DB record found for ID: " + csvId);
                 allMatched = false;
             }
@@ -75,7 +81,8 @@ public class CsvVsDbValidator {
         }
         if (!allMatched) {
             System.out.println("=== VALIDATION COMPLETED: MISMATCHES FOUND (NEGATIVE SCENARIO) ===");
-        } else {
+        }
+        else {
             System.out.println("=== VALIDATION COMPLETED: ALL RECORDS MATCH ===");
         }
 

@@ -10,6 +10,8 @@ public class SanitySteps {
 
     @Given("framework is ready")
     public void framework_is_ready() {
+
         System.out.println("Framework sanity check passed");
+
     }
 }

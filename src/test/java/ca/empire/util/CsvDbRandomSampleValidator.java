@@ -12,6 +12,8 @@ import java.util.Random;
 
 public class CsvDbRandomSampleValidator {
 
+    //Get 1000 rows randomly from DEL file and check if exist in DB
+
     public static void main(String[] args) {
 
         int SAMPLE_SIZE = 1000;

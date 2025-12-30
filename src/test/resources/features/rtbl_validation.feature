@@ -1,5 +1,6 @@
 Feature: RTBL Data Validation between DEL file and Database
 
+
   Scenario: Total record count should match
     Given the DEL file is loaded
     And the database connection is available
