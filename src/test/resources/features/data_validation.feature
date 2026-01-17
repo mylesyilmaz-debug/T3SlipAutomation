@@ -1,3 +1,4 @@
+@itax
 Feature: TRT data validation
 
   Scenario: Framework sanity check

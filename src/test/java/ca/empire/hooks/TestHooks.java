@@ -16,7 +16,7 @@ public class TestHooks {
     private static final String DEL_FILE_PATH ="C:/Users/citmxy/Downloads/file.del";
 
 
-    @Before
+    @Before ("@itax")
     public void setUp() throws Exception {
         // DB connection
         connection = DbUtil.getConnection();
@@ -27,7 +27,7 @@ public class TestHooks {
         System.out.println("📂 DEL file opened");
     }
 
-    @After
+    @After("@itax")
     public void tearDown() throws Exception {
         if (delReader != null) {
             delReader.close();
