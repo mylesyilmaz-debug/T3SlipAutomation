@@ -47,6 +47,24 @@ public class PcxLoginSpike {
 // If href is empty or javascript, force navigation via JS
         if (href == null || href.isBlank() || href.startsWith("javascript")) {
             ((JavascriptExecutor) driver).executeScript("arguments[0].click();", link);
+            String original = driver.getWindowHandle();
+
+            for (int i = 0; i < 10; i++) {
+                if (driver.getWindowHandles().size() > 1) break;
+                Thread.sleep(500);
+            }
+
+            if (driver.getWindowHandles().size() > 1) {
+                for (String h : driver.getWindowHandles()) {
+                    if (!h.equals(original)) {
+                        driver.switchTo().window(h);
+                        break;
+                    }
+                }
+                System.out.println("Switched to new window. URL = " + driver.getCurrentUrl());
+            } else {
+                System.out.println("No new window detected. Still in same window.");
+            }
             System.out.println("Clicked PageCenterX via JS click()");
         } else {
             driver.navigate().to(href);

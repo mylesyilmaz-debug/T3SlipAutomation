@@ -23,7 +23,7 @@ wrapper {
 }
 
 def cucumber_version = '7.3.4'
-def selenium_version = "4.22.0"
+def selenium_version = "4.27.0"
 def rest_assured_version = "4.5.0"
 def driver_manager_version = '5.2.0'
 def appium_version = '8.0.0'
@@ -38,8 +38,9 @@ configurations {
 
 dependencies {
     // Selenium
-    testImplementation platform("org.seleniumhq.selenium:selenium-bom:4.22.0")
-    testImplementation "org.seleniumhq.selenium:selenium-java"
+    testImplementation group: 'org.seleniumhq.selenium', name: 'selenium-java', version: selenium_version
+    testImplementation group: 'org.seleniumhq.selenium', name: 'selenium-api', version: selenium_version
+
 
     // Cucumber
     testImplementation group: 'io.cucumber', name: 'cucumber-core', version: cucumber_version
