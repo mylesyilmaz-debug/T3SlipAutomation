@@ -8,6 +8,7 @@ import io.cucumber.junit.CucumberOptions;
 @CucumberOptions(
         features = "src/test/resources/features",
         glue = {"ca.empire.steps","ca.empire.hooks"},
+        tags = "@itax",
         plugin = {
                 "pretty",
                 "html:target/cucumber-report.html"
