@@ -1,7 +1,6 @@
-import ca.empire.util.Db2Util;
+package test2;
 
-import java.math.BigDecimal;
-import java.sql.SQLOutput;
+import ca.empire.util.Db2Util;
 
 public class Db2ConnectionTest {
 

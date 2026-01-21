@@ -1,3 +1,4 @@
+package test2;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -41,12 +42,7 @@ public class ChromeDiagnosticTest {
                     ExpectedConditions.elementToBeClickable(By.linkText("PageCenterX"))
             );
 
-            // 6. INSTEAD OF CLICKING (to avoid the crash):
-            // We get the address and go there directly
-            String destination = pcxLink.getAttribute("href");
-            System.out.println("Bypassing JS Click. Moving to: " + destination);
-
-            driver.get(destination);
+            //pcxLink.click();
 
             // 7. Success Check
             System.out.println("Wait for Dashboard to load...");
