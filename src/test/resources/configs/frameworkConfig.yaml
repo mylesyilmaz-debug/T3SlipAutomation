@@ -1,24 +1,25 @@
 # This is an example config file for the testing framework. Feel free to repurpose/rename this file to fit your needs.
 
 environment:
-  name: EXAMPLE
-  filepath: "./environments/examples/example.env"
+  name: PILOT
+  filepath: "./environments/pilot.env"
 
 downloadManagement:
   deletionCondition: afterEach
   attachmentCondition: unsuccessful
 
-defaultProfile: chrome-desktop
+defaultProfile: edge-local
 
 # TODO: configure desired device profiles
 profiles:
-  - name: chrome-desktop-debug
-    description: "Chrome desktop driver that is not headless. Mainly used for debugging purposes."
+  - name: edge-local
+    systemProperties:
+      webdriver.edge.driver: "C:/temp/msedgedriver.exe"
     driverOptions:
-      name: chrome
+      name: edge
       arguments:
-        - "--ignore-certificate-errors"
-        - "--window-size=1280,720"
+        - "--start-maximized"
+       # - "--inprivate"
       experimentalOptions:
         prefs:
           plugins.always_open_pdf_externally: true

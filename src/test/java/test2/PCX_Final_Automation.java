@@ -76,6 +76,34 @@ public class PCX_Final_Automation {
             WebElement goButton = driver.findElement(By.id("fbutton"));
             goButton.click();
 
+            // --- STEP 5: VALIDATE BATCH CYCLE DATE ---
+            System.out.println("Verifying batch cycle date...");
+
+            // 1. Locate the row that contains our specific file name
+            // Using XPath to find the row (tr) that has a link with our filename
+            String rowXpath = "//tr[td/a[text()='STPY0510DET.TXT']]";
+            WebElement fileRow = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(rowXpath)));
+
+            // 2. Find the 'Import Date' cell within that row
+            // Based on your UI, the Import Date is usually the 4th cell (td) in the row
+            WebElement importDateCell = fileRow.findElement(By.xpath("./td[3]"));
+            String actualDate = importDateCell.getText();
+
+            System.out.println("Found File with Import Date: " + actualDate);
+
+            // 3. Compare with expected cycle date (2025/12/10)
+            String expectedCycleDate = "2025/12/10";  //if the cycle run after midnight the expected date should range
+            //for 24 hours which means , it may be Dec 10 to Dec 11
+
+            if (actualDate.startsWith(expectedCycleDate)) {
+                System.out.println("SUCCESS: Batch cycle date verified. Proceeding to download...");
+            } else {
+                System.err.println("FAILURE: Date mismatch! Expected " + expectedCycleDate + " but found " + actualDate);
+                // Stop the test here if the date is wrong
+                driver.quit();
+                return;
+            }
+
             // STEP 5: RIGHT-CLICK DOWNLOAD
             System.out.println("Attempting to download...");
             WebElement fileLink = wait.until(ExpectedConditions.visibilityOfElementLocated(By.linkText(targetFile)));
@@ -84,16 +112,6 @@ public class PCX_Final_Automation {
 
             // Perform Right-Click
             actions.contextClick(fileLink).perform();
-
-//            // Select 'Download' from context menu
-//            WebElement downloadOpt = wait.until(ExpectedConditions.elementToBeClickable(By.id("pxcdownload")));
-//            actions.moveToElement(downloadOpt).click().perform();
-//
-//            Thread.sleep(2000);
-//
-//            // Click 'Document' sub-menu
-//            WebElement docSubOpt = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//span[text()='Document']")));
-//            docSubOpt.click();
 
             //Click the 'Download' main menu item (using id="pxcdownload")
             WebElement downloadOpt = wait.until(ExpectedConditions.elementToBeClickable(By.id("pxcdownload")));
@@ -121,9 +139,16 @@ public class PCX_Final_Automation {
 
             if (success) {
                 System.out.println("******************************************");
-                System.out.println("SUCCESS: File " + targetFile + " is available, readable, and downloaded!");
-                System.out.println("File Size: " + downloadedFile.length() + " bytes");
+                System.out.println("SUCCESS: File " + targetFile + " is downloaded!");
                 System.out.println("******************************************");
+
+                // 1. Parsing and Cleaning call (using the File object from earlier in the try block)
+                System.out.println("Starting file parsing and cleaning...");
+                String csvOutput = downloadDir + "STPY0510DET_Cleaned.csv";
+
+                // We call the method using the absolute path of the file we verified
+                parseAndCleanFile(downloadedFile.getAbsolutePath(), csvOutput);
+
             } else {
                 System.err.println("FAILURE: File not found in " + downloadDir);
             }
@@ -133,7 +158,73 @@ public class PCX_Final_Automation {
             e.printStackTrace();
         } finally {
             System.out.println("Automation session complete.");
-            // driver.quit(); // Uncomment this to close browser automatically
+            // driver.quit();
+        }
+
+
+
+    }
+
+    public static void parseAndCleanFile(String inputPath, String outputPath) {
+        try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(inputPath));
+             java.io.PrintWriter writer = new java.io.PrintWriter(new java.io.FileWriter(outputPath))) {
+
+            // 1. Write the Header
+            writer.println("FUND_CODE,CL,SIN_NUM,POLICY_NUM,COV_NUM,YR_BEG_ACB,INT_ELIG,DIV_ELIG,DIV_FOREIGN,GAINS_DISP,GAINS_CAN,TOTAL_INC,YR_END_ACB");
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                // Clean up the line: turn multiple spaces into a single space for easy splitting
+                String cleanLine = line.trim().replaceAll(" +", " ");
+                String[] tokens = cleanLine.split(" ");
+
+                // 2. Dynamic Filter: Data rows must have at least 10 pieces of information
+                // Total rows must have at least 7 pieces
+                if (tokens.length < 7) continue;
+
+                String fund = tokens[0];
+                String cl   = tokens[1];
+
+                // Validate that 'cl' looks like a Province (2 capital letters)
+                if (!cl.matches("[A-Z]{2}")) continue;
+
+                // --- CASE A: DATA ROW (SIN exists at tokens[2]) ---
+                if (tokens.length >= 11 && tokens[2].matches("\\d{9}")) {
+                    String sin = tokens[2];
+                    String rawPolicy = tokens[3];
+                    String policy = rawPolicy.substring(0, rawPolicy.length() - 2);
+                    String cov = rawPolicy.substring(rawPolicy.length() - 2);
+
+                    // Check for non-zero financial data (tokens 4 to end)
+                    boolean hasData = false;
+                    StringBuilder financials = new StringBuilder();
+                    for (int i = 4; i < tokens.length; i++) {
+                        String val = tokens[i].replace(",", "");
+                        if (!val.equals("0.00")) hasData = true;
+                        financials.append(",").append(val);
+                    }
+
+                    // Only write if there is actual money in the row
+                    if (hasData) {
+                        writer.println(fund + "," + cl + "," + sin + "," + policy + "," + cov + financials.toString());
+                    }
+                }
+
+                // --- CASE B: TOTAL ROW (No SIN, fewer tokens, but has financials) ---
+                else if (tokens.length >= 7 && tokens.length < 11) {
+                    // We know it's a total row if it starts with Fund/CL but doesn't have a SIN
+                    StringBuilder totals = new StringBuilder();
+                    for (int i = 2; i < tokens.length; i++) {
+                        totals.append(",").append(tokens[i].replace(",", ""));
+                    }
+                    // Leave SIN, Policy, and Cov empty in the CSV for totals
+                    writer.println(fund + "," + cl + ",,,," + totals.toString());
+                }
+            }
+            System.out.println("Dynamic parsing complete. Output saved to: " + outputPath);
+
+        } catch (java.io.IOException e) {
+            System.err.println("Error: " + e.getMessage());
         }
     }
 }

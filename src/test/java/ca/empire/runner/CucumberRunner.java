@@ -5,9 +5,11 @@ import org.junit.runner.RunWith;
 
 @RunWith(Cucumber.class)
 @CucumberOptions(
-        features = {"src/test/resources/features"},
-        glue = {"ca.empire"},
-        tags = "@one",
-        plugin = {"com.epam.reportportal.cucumber.ScenarioReporter"},
-        monochrome = true)
-public class CucumberRunner {}
+        features = "src/test/resources/feature",
+        glue = "ca.empire",
+        tags = "@regression", // Ensure this matches your feature file tag
+        plugin = {"pretty", "html:target/cucumber-reports.html"}
+)
+public class CucumberRunner {
+
+   }

@@ -351,31 +351,34 @@ public class DriverFactory {
      */
     private static DriverDecorator createEdgeDriver(DriverOptions driverOptions) {
         logger.traceEntry(() -> driverOptions);
-        trySetupDriver(
-                SupportedDriver.edge, driverOptions.driverVersion, driverOptions.browserVersion);
+
+        // Skip the trySetupDriver call entirely because it tries to use the internet
+        // trySetupDriver(SupportedDriver.edge, driverOptions.driverVersion, driverOptions.browserVersion);
 
         DriverDecorator driverDecorator = new DriverDecorator().setUuid(UUID.randomUUID());
-        EdgeOptions options = new EdgeOptions().addArguments(driverOptions.arguments);
+        EdgeOptions options = new EdgeOptions();
+
+        // Add arguments from YAML (like --inprivate and --start-maximized)
+        if (driverOptions.arguments != null) {
+            options.addArguments(driverOptions.arguments);
+        }
 
         try {
             driverDecorator.setDownloadDirectory(
                     FileOperations.generateTempDownloadDirectory(driverDecorator.getUuid()));
+
+            Map<String, Object> experimentalOptions =
+                    tryAddChromiumDownloadDirectory(
+                            driverOptions.experimentalOptions,
+                            driverDecorator.getDownloadDirectory().getAbsolutePath());
+            experimentalOptions.forEach(options::setExperimentalOption);
         } catch (IOException e) {
-            logger.error(e);
-            return null;
-        }
-
-        Map<String, Object> experimentalOptions =
-                tryAddChromiumDownloadDirectory(
-                        driverOptions.experimentalOptions,
-                        driverDecorator.getDownloadDirectory().getAbsolutePath());
-        experimentalOptions.forEach(options::setExperimentalOption);
-
-        if (driverOptions.capabilities != null) {
-            driverOptions.capabilities.forEach(options::setCapability);
+            logger.error("Failed to setup download directory: {}", e.getMessage());
         }
 
         options.setPageLoadStrategy(PageLoadStrategy.NORMAL);
+
+        // This will now use the "webdriver.edge.driver" path you set in the frameworkConfig.yaml
         driverDecorator.setDriver(new EdgeDriver(options));
 
         logger.traceExit(driverDecorator);
@@ -434,6 +437,8 @@ public class DriverFactory {
      */
     private static void trySetupDriver(
             SupportedDriver supportedDriver, String driverVersion, String browserVersion) {
+
+        if (supportedDriver == SupportedDriver.edge) return;
         logger.traceEntry(() -> supportedDriver, () -> driverVersion, () -> browserVersion);
 
         driverSetupLock.readLock().lock();
