@@ -1,6 +1,8 @@
 package ca.empire.util;
 
 
+import ca.empire.setup.configuration.Config;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.sql.*;
@@ -41,14 +43,15 @@ public class CsvDbSampleExistenceValidator {
 
         String delFilePath = "C:/Users/citmxy/Downloads/file.del";
         String dbUrl = "jdbc:db2://kgnmfdbmlt01.empire.ca:50111/DBIUA1";
-        String dbUser = "citmxy@empire.corp";
-        String dbPass = "PakTurk78%";
+
         String tableName = "ipr1dba1.trt";
 
         int sampleLimit = 5;
         int processed = 0;
 
-        Connection conn = DriverManager.getConnection(dbUrl, dbUser, dbPass);
+        Connection conn = DriverManager.getConnection(dbUrl,
+                Config.getDbUsername(),
+                Config.getDbPassword());
         String sql =
                 "SELECT 1 FROM " + tableName +
                         " WHERE CO_ID = ? " +

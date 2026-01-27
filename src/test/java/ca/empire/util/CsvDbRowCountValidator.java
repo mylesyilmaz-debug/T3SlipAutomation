@@ -1,5 +1,7 @@
 package ca.empire.util;
 
+import ca.empire.setup.configuration.Config;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -15,8 +17,6 @@ public class CsvDbRowCountValidator {
     public static void main(String[] args) {
         String csvPath = "C:/Users/citmxy/Downloads/file.del";
         String dbUrl = "jdbc:db2://kgnmfdbmlt01.empire.ca:50111/DBIUA1";
-        String dbUser = "citmxy@empire.corp";
-        String dbPass = "PakTurk78%";
         String tableName = "ipr1dba1.trt";
 
         int rowCount = 0;
@@ -39,7 +39,9 @@ public class CsvDbRowCountValidator {
 
         String sql = "SELECT COUNT(*) FROM ipr1dba1.trt where prev_updt_user_id = 'S24211'";
 
-        try (Connection conn = DriverManager.getConnection(dbUrl, dbUser, dbPass);
+        try (Connection conn = DriverManager.getConnection(dbUrl,
+                Config.getDbUsername(),
+                Config.getDbPassword());
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
