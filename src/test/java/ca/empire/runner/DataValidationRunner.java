@@ -6,8 +6,8 @@ import io.cucumber.junit.CucumberOptions;
 
 @RunWith(Cucumber.class)
 @CucumberOptions(
-        features = "src/test/resources/features",
-        glue = {"ca.empire.steps","ca.empire.hooks"},
+        features = "src/test/resources/feature",
+        glue = {"ca.empire"},
         tags = "@itax",
         plugin = {
                 "pretty",

@@ -1,9 +1,6 @@
 @itax
 Feature: TRT data validation
 
-  Scenario: Framework sanity check
-    Given framework is ready
-
   Scenario: Validate total record count between DEL file and DB
     Given DEL file is loaded
     And DB connection is available

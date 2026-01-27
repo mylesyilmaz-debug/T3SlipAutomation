@@ -39,8 +39,21 @@ public class PCX_Final_Automation {
             driver.get("https://kgnpcxpl01.empire.corp/lrs/nlrswc2.exe/pcx?trid=logonx&tridsfx=&cssover=&srvid=DEVPCX01&svrlst=&logoff=1T");
 
             System.out.println("Entering credentials...");
-            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("usid"))).sendKeys("citmxy");
-            driver.findElement(By.id("pwidtemp")).sendKeys("PakTurk78%");
+            WebElement userField = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("usid")));
+            userField.click();
+            userField.clear();
+            userField.sendKeys("citmxy");
+
+// 2. Small "Safety" pause to let the browser process the text
+            Thread.sleep(500);
+
+// 3. Handle Password: Click specifically to move focus away from Username
+            WebElement passField = driver.findElement(By.id("pwidtemp"));
+            passField.click();
+            passField.clear();
+            passField.sendKeys("PakTurk78%");
+
+// 4. Click Logon
             Thread.sleep(5000);
             driver.findElement(By.id("LogonID")).click();
 
