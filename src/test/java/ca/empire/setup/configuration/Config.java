@@ -7,6 +7,8 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+import java.util.Properties;
+import java.io.FileInputStream;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,6 +18,7 @@ import java.util.ArrayList;
 public class Config {
     private Configuration configurationModel;
     private Profile profile;
+    private static Properties envProperties = new Properties();
 
     private static final Logger logger = LogManager.getLogger(Config.class);
 
@@ -67,6 +70,15 @@ public class Config {
 
         logger.info("Profile found! " + profile.name + " - " + profile.description);
 
+        // --- NEW LOGIC STARTS HERE ---
+        // We ignore the profile name and look for the file the framework wants: pilot.env
+        String projectRoot = System.getProperty("user.dir");
+        String envPath = projectRoot + File.separator + "environments" + File.separator + "pilot.env";
+
+        logger.info("Config is loading URL from: " + envPath);
+        loadEnvFile(envPath);
+        // --- NEW LOGIC ENDS HERE ---
+
         if (configurationModel.systemProperties != null) {
             configurationModel.systemProperties.forEach(System::setProperty);
         }
@@ -87,6 +99,38 @@ public class Config {
     public Config(@NotNull String configYamlFilepath, String profile) throws IOException {
         this(new File(configYamlFilepath), profile);
     }
+
+    /**
+     * Loads the .env file into the static Properties object.
+     */
+    private static void loadEnvFile(String filePath) {
+        File file = new File(filePath);
+        if (file.exists()) {
+            try (FileInputStream fis = new FileInputStream(file)) {
+                envProperties.load(fis);
+                logger.info("Successfully loaded environment properties from: " + filePath);
+            } catch (IOException e) {
+                logger.error("Failed to load .env file: " + filePath, e);
+            }
+        } else {
+            logger.warn("Environment file not found at: " + filePath + ". Skipping load.");
+        }
+    }
+
+    /**
+     * Gets a property from the loaded .env file.
+     */
+    public static String getEnvProperty(String key) {
+        return envProperties.getProperty(key);
+    }
+
+    /**
+     * Returns the PageCenterX URL from the .env file.
+     */
+    public static String getPcxUrl() {
+        return getEnvProperty("pcx-url");
+    }
+
 
     public Configuration getConfigurationModel() {
         logger.traceEntry();
@@ -142,4 +186,8 @@ public class Config {
         if (pass == null) throw new RuntimeException("DB_PASSWORD env variable is missing!");
         return pass;
     }
+
+
+
+
 }

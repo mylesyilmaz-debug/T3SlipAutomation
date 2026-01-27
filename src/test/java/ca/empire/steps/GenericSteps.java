@@ -23,10 +23,10 @@ public class GenericSteps extends StepDefinition {
     @Given("I navigate to {string}")
     public void navigateTo(String url) throws InterruptedException {
         WebDriver driver = Hooks.getDriver();
-        String finalUrl = "https://kgnpcxpl01.empire.corp/lrs/nlrswc2.exe/pcx?trid=logonx&tridsfx=&cssover=&srvid=DEVPCX01&svrlst=&logoff=1T";
+        //String finalUrl = "https://kgnpcxpl01.empire.corp/lrs/nlrswc2.exe/pcx?trid=logonx&tridsfx=&cssover=&srvid=DEVPCX01&svrlst=&logoff=1T";
 
         // 1. Navigate to the PCX URL
-        driver.get(finalUrl);
+        driver.get(Config.getPcxUrl());
         logger.info("Navigated to PageCenterX URL.");
 
         // 2. Setup a wait for the login elements
