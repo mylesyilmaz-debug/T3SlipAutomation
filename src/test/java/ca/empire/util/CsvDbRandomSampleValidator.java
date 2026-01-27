@@ -1,5 +1,7 @@
 package ca.empire.util;
 
+import ca.empire.setup.configuration.Config;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.sql.Connection;
@@ -27,8 +29,7 @@ public class CsvDbRandomSampleValidator {
 
         String filePath = "C:/Users/citmxy/Downloads/file.del";
         String dbUrl = "jdbc:db2://kgnmfdbmlt01.empire.ca:50111/DBIUA1";
-        String dbUser = "citmxy@empire.corp";
-        String dbPass = "PakTurk78%";
+
         String tableName = "ipr1dba1.trt";
 
         String sql =
@@ -40,7 +41,9 @@ public class CsvDbRandomSampleValidator {
                         "AND RTBL_PAR_CD = ? " +
                         "AND RTBL_SEX_CD = ? " ;
 
-        try (Connection conn = DriverManager.getConnection(dbUrl, dbUser, dbPass);
+        try (Connection conn = DriverManager.getConnection(dbUrl,
+                Config.getDbUsername(),
+                Config.getDbPassword());
              BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
 
             String line;

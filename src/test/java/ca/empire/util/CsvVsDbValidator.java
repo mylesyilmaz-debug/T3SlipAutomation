@@ -1,5 +1,6 @@
 package ca.empire.util;
 
+import ca.empire.setup.configuration.Config;
 import com.opencsv.CSVReader;
 
 import java.io.FileReader;
@@ -30,10 +31,10 @@ public class CsvVsDbValidator {
         String csvPath = "src/test/resources/testdata/data.csv";
 
         String url = "jdbc:db2://kgnmfdbmlt01.empire.ca:50111/DBIUA1";
-        String user = "citmxy@empire.corp";
-        String password = "PakTurk78%";
 
-        Connection connection = DriverManager.getConnection(url, user, password);
+        Connection connection = DriverManager.getConnection(url,
+                Config.getDbUsername(),
+                Config.getDbPassword());
         Statement statement = connection.createStatement();
 
         FileReader fileReader = new FileReader(csvPath);

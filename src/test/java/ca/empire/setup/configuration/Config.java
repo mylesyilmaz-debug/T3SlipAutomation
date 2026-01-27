@@ -99,4 +99,47 @@ public class Config {
         logger.traceExit(profile);
         return profile;
     }
+
+    /**
+     * Retrieves the PageCenterX username from Environment Variables.
+     * @return String username
+     */
+    public static String getPcxUsername() {
+        String user = System.getenv("PCX_USERNAME");
+        if (user == null || user.isEmpty()) {
+            logger.error("PCX_USERNAME Environment Variable is NOT set!");
+            throw new RuntimeException("Missing environment variable: PCX_USERNAME");
+        }
+        logger.info("PCX_USERNAME loaded successfully from environment.");
+        return user;
+    }
+
+    /**
+     * Retrieves the PageCenterX password from Environment Variables.
+     * @return String password
+     */
+    public static String getPcxPassword() {
+        String pass = System.getenv("PCX_PASSWORD");
+        if (pass == null || pass.isEmpty()) {
+            logger.error("PCX_PASSWORD Environment Variable is NOT set!");
+            throw new RuntimeException("Missing environment variable: PCX_PASSWORD");
+        }
+        // We log that it was found, but we NEVER log the actual password string.
+        logger.info("PCX_PASSWORD loaded successfully from environment.");
+        return pass;
+    }
+
+    /** Retrieves the Database username */
+    public static String getDbUsername() {
+        String user = System.getenv("DB_USERNAME");
+        if (user == null) throw new RuntimeException("DB_USERNAME env variable is missing!");
+        return user;
+    }
+
+    /** Retrieves the Database password */
+    public static String getDbPassword() {
+        String pass = System.getenv("DB_PASSWORD");
+        if (pass == null) throw new RuntimeException("DB_PASSWORD env variable is missing!");
+        return pass;
+    }
 }

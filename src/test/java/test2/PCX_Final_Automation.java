@@ -39,19 +39,27 @@ public class PCX_Final_Automation {
             driver.get("https://kgnpcxpl01.empire.corp/lrs/nlrswc2.exe/pcx?trid=logonx&tridsfx=&cssover=&srvid=DEVPCX01&svrlst=&logoff=1T");
 
             System.out.println("Entering credentials...");
+            String myUsername = System.getenv("PCX_USERNAME");
+            String myPassword = System.getenv("PCX_PASSWORD");
+
+            if (myUsername == null || myPassword == null) {
+                throw new RuntimeException("ERROR: PCX_USERNAME or PCX_PASSWORD environment variables are not set! " +
+                        "Please check your Windows environment settings.");
+            }
+
             WebElement userField = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("usid")));
             userField.click();
             userField.clear();
-            userField.sendKeys("citmxy");
+            userField.sendKeys(myUsername);
 
-// 2. Small "Safety" pause to let the browser process the text
             Thread.sleep(500);
 
-// 3. Handle Password: Click specifically to move focus away from Username
             WebElement passField = driver.findElement(By.id("pwidtemp"));
             passField.click();
             passField.clear();
-            passField.sendKeys("PakTurk78%");
+            passField.sendKeys(myPassword);
+
+
 
 // 4. Click Logon
             Thread.sleep(5000);

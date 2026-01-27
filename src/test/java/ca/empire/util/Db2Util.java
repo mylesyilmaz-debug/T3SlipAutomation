@@ -1,5 +1,7 @@
 package ca.empire.util;
 
+import ca.empire.setup.configuration.Config;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -10,12 +12,13 @@ public class Db2Util {
     public static int getRowCount() {
 
         String url = "jdbc:db2://kgnmfdbmlt01.empire.ca:50111/DBIUA1";
-        String user = "citmxy@empire.corp";
-        String password = "PakTurk78%";
 
         String query = "SELECT COUNT(*) FROM ipr1dba1.trt";
 
-        try (Connection conn = DriverManager.getConnection(url, user, password);
+        try (Connection conn = DriverManager.getConnection(
+                url,
+                Config.getDbUsername(),
+                Config.getDbPassword());
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
 

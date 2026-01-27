@@ -1,4 +1,6 @@
 package ca.empire.util;
+import ca.empire.setup.configuration.Config;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.io.BufferedReader;
@@ -14,15 +16,16 @@ public class DelVsDbValidatorV2 {
 
         String filePath = "C:/Users/citmxy/Downloads/file.del";
         String dbUrl = "jdbc:db2://kgnmfdbmlt01.empire.ca:50111/DBIUA1";
-        String dbUser = "citmxy@empire.corp";
-        String dbPass = "PakTurk78%";
+
         String tableName = "ipr1dba1.trt";
 
         int processed = 0;
         int found = 0;
         int notFound = 0;
 
-        try (Connection conn = DriverManager.getConnection(dbUrl, dbUser, dbPass);
+        try (Connection conn = DriverManager.getConnection(dbUrl,
+                Config.getDbUsername(),
+                Config.getDbPassword());
              BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
 
             System.out.println("DB connection successful");

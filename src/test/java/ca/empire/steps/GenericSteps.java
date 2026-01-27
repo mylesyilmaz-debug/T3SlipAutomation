@@ -1,6 +1,7 @@
 package ca.empire.steps;
 
 import ca.empire.setup.Hooks;
+import ca.empire.setup.configuration.Config;
 import io.cucumber.java.en.Given;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,8 +34,8 @@ public class GenericSteps extends StepDefinition {
 
         try {
             // 3. Find and fill the login form (assuming standard PCX field names)
-            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("usid"))).sendKeys("citmxy");
-            driver.findElement(By.id("pwidtemp")).sendKeys("PakTurk78%");
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("usid"))).sendKeys(Config.getPcxUsername());
+            driver.findElement(By.id("pwidtemp")).sendKeys(Config.getPcxPassword());
             Thread.sleep(5000);
             driver.findElement(By.id("LogonID")).click();
 
