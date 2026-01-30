@@ -131,6 +131,13 @@ public class Config {
         return getEnvProperty("pcx-url");
     }
 
+    /**
+     * Returns the GCP Bucket URL from the .env file.
+     */
+    public static String getGcpUrl() {
+        return getEnvProperty("gcp-bucket-url");
+    }
+
 
     public Configuration getConfigurationModel() {
         logger.traceEntry();
@@ -184,6 +191,28 @@ public class Config {
     public static String getDbPassword() {
         String pass = System.getenv("DB_PASSWORD");
         if (pass == null) throw new RuntimeException("DB_PASSWORD env variable is missing!");
+        return pass;
+    }
+
+    /**
+     * Helper to get GCP Email from System Environment.
+     */
+    public static String getGcpEmail() {
+        String email = System.getenv("EDGE_EMAIL");
+        if (email == null) {
+            throw new RuntimeException("EDGE_EMAIL environment variable is missing!");
+        }
+        return email;
+    }
+
+    /**
+     * Helper to get GCP Password from System Environment.
+     */
+    public static String getGcpPassword() {
+        String pass = System.getenv("EDGE_PASSWORD");
+        if (pass == null) {
+            throw new RuntimeException("EDGE_PASSWORD environment variable is missing!");
+        }
         return pass;
     }
 

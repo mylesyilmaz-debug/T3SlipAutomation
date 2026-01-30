@@ -10,6 +10,7 @@ public class PageCenterXSteps extends StepDefinition {
     private PageCenterXPage pcxPage;
 
     public PageCenterXSteps() {
+
         this.pcxPage = new PageCenterXPage();
     }
 

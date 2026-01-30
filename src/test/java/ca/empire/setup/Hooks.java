@@ -183,6 +183,8 @@ public class Hooks {
         logger.traceExit();
     }
 
+
+
     /**
      * Sets the scenario of this test
      *
@@ -422,10 +424,28 @@ public class Hooks {
             }
         }
 
-        if (downloadManagement.deletionCondition
+        /*if (downloadManagement.deletionCondition
                 == DownloadManagement.DeletionCondition.afterEach) {
             FileOperations.deleteDir(downloadDir);
+        }*/
+        try {
+            File targetDir = new File("C:\\Selenium_Downloads");
+            if (!targetDir.exists()) {
+                targetDir.mkdirs();
+            }
+
+            if (downloadedFiles != null) {
+                for (File file : downloadedFiles) {
+                    // We use Apache Commons IO (already imported in your class)
+                    FileUtils.copyFileToDirectory(file, targetDir);
+                    logger.info("SAVED FILE TO: " + targetDir.getAbsolutePath() + "\\" + file.getName());
+                    System.out.println("SAVED FILE TO: " + targetDir.getAbsolutePath() + "\\" + file.getName());
+                }
+            }
+        } catch (IOException e) {
+            logger.warn("Could not copy files to C:\\Selenium_Downloads: " + e.getMessage());
         }
+
         logger.traceExit();
     }
 
