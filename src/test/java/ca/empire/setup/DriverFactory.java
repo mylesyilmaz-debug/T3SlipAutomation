@@ -358,7 +358,14 @@ public class DriverFactory {
         DriverDecorator driverDecorator = new DriverDecorator().setUuid(UUID.randomUUID());
         EdgeOptions options = new EdgeOptions();
 
-        // Add arguments from YAML (like --inprivate and --start-maximized)
+        // --- NEW: Inject Persistent Profile Logic ---
+        // This tells Edge to save your Google Login cookies to this folder
+        String userDataDir = System.getProperty("user.home") + "\\SeleniumProfile";
+        options.addArguments("user-data-dir=" + userDataDir);
+        // --------------------------------------------
+
+        // Add arguments from YAML (like --start-maximized)
+        // NOTE: Make sure "--inprivate" is NOT in your YAML, or the profile won't save!
         if (driverOptions.arguments != null) {
             options.addArguments(driverOptions.arguments);
         }
