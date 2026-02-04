@@ -42,7 +42,8 @@ public class T3ParserMain {
     }
 
     private static void parseIndividualRecords(List<String> lines) throws IOException {
-        String header = "Account Number,Surname 1,Name 1,Surname 2,Name 2,Business Name,Address 1,Address 2,City,Prov,Country,Postal,Trust Account,Capital Gains (21),Other Income (26/G),Foreign Income (25/F),Capital Losses (37),Actual Div (49/C1),Taxable Div (50),Div Tax Credit (51),Policy Num,SIN,CLI_ID";
+        // Updated Header with new columns
+        String header = "Account Number,Surname 1,Name 1,Surname 2,Name 2,Business Name,Address 1,Address 2,City,Prov,Country,Postal,SIN2,Trust Account,CRA_PRT_CODE_ID,Recipient Type,Capital Gains (21),Other Income (26/G),Foreign Income (25/F),Capital Losses (37),Actual Div (49/C1),Taxable Div (50),Div Tax Credit (51),Policy Num,SIN,Status,CLI_ID";
 
         try (PrintWriter writer = new PrintWriter(new FileWriter(OUTPUT_CSV_INDIVIDUAL))) {
             writer.println(header);
@@ -56,9 +57,8 @@ public class T3ParserMain {
                 // Validation: Individual rows usually start with '2'
                 if (line.trim().length() < 10) continue;
 
-                // UPDATED: Account Number is now 2-9 (Start index 2, End index 9)
                 String row =
-                        safeExtract(line, 2, 9) + "," +      // UPDATED: Account Number (2-9)
+                        safeExtract(line, 2, 9) + "," +      // Account Number
                                 safeExtract(line, 10, 29) + "," +    // Surname 1
                                 safeExtract(line, 30, 42) + "," +    // Name 1
                                 safeExtract(line, 43, 62) + "," +    // Surname 2
@@ -70,7 +70,18 @@ public class T3ParserMain {
                                 safeExtract(line, 224, 225) + "," +  // Prov
                                 safeExtract(line, 226, 228) + "," +  // Country
                                 safeExtract(line, 229, 235) + "," +  // Postal Code
+
+                                // --- NEW FIELD: SIN2 (239 - 247) ---
+                                safeExtract(line, 239, 247) + "," +
+
                                 safeExtract(line, 272, 280) + "," +  // Trust Account
+
+                                // --- NEW FIELD: CRA_PRT_CODE_ID (231) ---
+                                safeExtract(line, 281, 281) + "," +
+
+                                // --- NEW FIELD: Recipient Type (282 - 283) ---
+                                safeExtract(line, 282, 283) + "," +
+
                                 formatDecimal(safeExtract(line, 284, 294)) + "," + // Box 21
                                 formatDecimal(safeExtract(line, 328, 338)) + "," + // Box 26/G
                                 formatDecimal(safeExtract(line, 460, 470)) + "," + // Box 25/F
@@ -80,6 +91,10 @@ public class T3ParserMain {
                                 formatDecimal(safeExtract(line, 592, 602)) + "," + // Box 51
                                 safeExtract(line, 603, 612) + "," +  // Policy Num
                                 safeExtract(line, 613, 621) + "," +  // SIN
+
+                                // --- NEW FIELD: Status (Completed/Error) (622 - 622) ---
+                                safeExtract(line, 622, 622) + "," +
+
                                 safeExtract(line, 623, 632);         // CLI_ID
 
                 writer.println(row);
@@ -103,8 +118,6 @@ public class T3ParserMain {
                 String line = lines.get(i);
 
                 if (line.trim().length() < 10) continue;
-
-                // Fund rows typically start with '3', but we rely on the row index here.
 
                 String row =
                         safeExtract(line, 2, 9) + "," +      // FUND Account Number

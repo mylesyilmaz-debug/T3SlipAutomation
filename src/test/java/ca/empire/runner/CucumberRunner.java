@@ -7,7 +7,7 @@ import org.junit.runner.RunWith;
 @CucumberOptions(
         features = "src/test/resources/feature",
         glue = "ca.empire",
-        tags = "@regression or @GCP",
+        tags = "@T3Parser or @RL16Parser",
         plugin = {"pretty", "html:target/cucumber-reports.html"}
 )
 public class CucumberRunner {

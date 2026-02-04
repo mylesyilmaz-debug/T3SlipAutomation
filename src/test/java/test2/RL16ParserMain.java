@@ -9,7 +9,6 @@ public class RL16ParserMain {
 
     // --- CONFIGURATION ---
     private static final String DOWNLOAD_PATH = "C:\\Selenium_Downloads";
-    // Matching "RL16TAPE" or similar based on your previous logs
     private static final String FILE_PATTERN = "RL16TAPE";
     private static final String OUTPUT_CSV = DOWNLOAD_PATH + "\\RL16_Parsed_Output.csv";
 
@@ -18,7 +17,13 @@ public class RL16ParserMain {
             File rl16File = findLatestRL16File();
             if (rl16File != null) {
                 System.out.println("Processing RL16 File: " + rl16File.getName());
-                parseRL16ToCsv(rl16File);
+
+                // 1. Read all lines into memory
+                List<String> allLines = readAllLines(rl16File);
+
+                // 2. Parse (Skipping First and Last row)
+                parseRL16ToCsv(allLines);
+
             } else {
                 System.err.println("FAILURE: No RL16 file found matching '" + FILE_PATTERN + "'");
             }
@@ -39,77 +44,72 @@ public class RL16ParserMain {
         return latest;
     }
 
-    private static void parseRL16ToCsv(File inputFile) throws IOException {
-        // We create a SUPER SET of headers to accommodate both Type 1 and Type 3 data cleanly
-        String header = "Year,3_Digit_Code,Recipient Type (15),Policy Num,Ref Name (30-42)," +
-                "SIN (Individual),Surname (Indiv),First Name (Indiv)," + // Type 1 Specifics
-                "SIN (Business),Business Name," +                        // Type 3 Specifics
-                "Address 1,Address 2,City," +                            // Shared Address
-                "Cap Gains (Box 21),Actual Div,Foreign Inc,Other Inc,Taxable Div,Div Tax Credit,Actual Div (Box J)";
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(inputFile, StandardCharsets.UTF_8));
-             PrintWriter writer = new PrintWriter(new FileWriter(OUTPUT_CSV))) {
-
-            writer.println(header);
-
+    private static List<String> readAllLines(File file) throws IOException {
+        List<String> lines = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                // 1. SKIP HEADERS/TRAILERS based on length or missing discriminator
+                lines.add(line);
+            }
+        }
+        return lines;
+    }
+
+    private static void parseRL16ToCsv(List<String> lines) throws IOException {
+        String header = "Year,3_Digit_Code,Recipient Type (15),Policy Num," +
+                "SIN (Individual),Surname (Indiv),First Name (Indiv)," +
+                "SIN (Business),Business Name," +
+                "Address 1,Address 2,City,Postal Code," +
+                "Cap Gains (Box 21),Actual Div,Foreign Inc,Other Inc,Taxable Div,Div Tax Credit,Actual Div (Box J)";
+
+        try (PrintWriter writer = new PrintWriter(new FileWriter(OUTPUT_CSV))) {
+            writer.println(header);
+
+            // LOGIC CHANGE:
+            // Start at i = 1 (Skip First Row/Header)
+            // End at i < lines.size() - 1 (Skip Last Row/Trailer)
+
+            if (lines.size() < 2) {
+                System.out.println("WARNING: File has fewer than 2 lines. No data processed.");
+                return;
+            }
+
+            for (int i = 1; i < lines.size() - 1; i++) {
+                String line = lines.get(i);
+
+                // Safety check: skip empty lines or lines too short to contain data
                 if (line.trim().length() < 15) continue;
 
-                // 2. IDENTIFY RECIPIENT TYPE (Column 15 -> Index 14)
-                char recipientType = line.charAt(14);
-
-                // We only process if Type is '1' (Individual) or '3' (Business)
-                if (recipientType != '1' && recipientType != '3') {
-                    continue;
-                }
-
-                // 3. INITIALIZE FIELDS
-                String sinIndiv = "", surname = "", firstName = "";
-                String sinBus = "", busName = "";
-
-                // 4. CONDITIONAL PARSING
-                if (recipientType == '1') {
-                    // --- TYPE 1: INDIVIDUAL ---
-                    sinIndiv  = safeExtract(line, 36, 44);
-                    surname   = safeExtract(line, 45, 74);
-                    firstName = safeExtract(line, 75, 105);
-                } else {
-                    // --- TYPE 3: BUSINESS ---
-                    sinBus    = safeExtract(line, 106, 114);
-                    busName   = safeExtract(line, 116, 175);
-                }
-
-                // 5. CONSTRUCT ROW
-                // Note: Address 1 (146-175) is extracted for BOTH.
-                // Warning: For Type 3, this might overlap with the end of Business Name.
+                // We extract ALL fields for EVERY row regardless of Type
                 String row =
                         safeExtract(line, 1, 4) + "," +       // Year
                                 safeExtract(line, 11, 13) + "," +     // 3 Digit Code
-                                recipientType + "," +                 // Type (Col 15)
+                                safeExtract(line, 15, 15) + "," +     // Recipient Type (Col 15)
                                 safeExtract(line, 16, 25) + "," +     // Policy Num
-                                safeExtract(line, 30, 42) + "," +     // Ref Name (Common)
 
-                                sinIndiv + "," +                      // Individual Fields
-                                surname + "," +
-                                firstName + "," +
+                                // --- INDIVIDUAL FIELDS ---
+                                safeExtract(line, 36, 44) + "," +     // SIN (Individual)
+                                safeExtract(line, 45, 74) + "," +     // Surname
+                                safeExtract(line, 75, 105) + "," +    // First Name
 
-                                sinBus + "," +                        // Business Fields
-                                busName + "," +
+                                // --- BUSINESS FIELDS ---
+                                safeExtract(line, 106, 114) + "," +   // SIN (Business)
+                                safeExtract(line, 116, 145) + "," +   // Business Name
 
-                                safeExtract(line, 146, 175) + "," +   // Address 1 (Both)
-                                safeExtract(line, 176, 205) + "," +   // Address 2 (Both)
-                                safeExtract(line, 206, 235) + "," +   // City (Both)
+                                // --- ADDRESS FIELDS ---
+                                safeExtract(line, 146, 175) + "," +   // Address 1
+                                safeExtract(line, 176, 205) + "," +   // Address 2
+                                safeExtract(line, 206, 235) + "," +   // City
+                                safeExtract(line, 236, 241) + "," +   // Postal Code
 
-                                // AMOUNTS (Both)
+                                // --- AMOUNTS ---
                                 formatDecimal(safeExtract(line, 303, 314)) + "," + // Cap Gains
-                                formatDecimal(safeExtract(line, 315, 326)) + "," + // Actual Div (First one)
+                                formatDecimal(safeExtract(line, 315, 326)) + "," + // Actual Div (First)
                                 formatDecimal(safeExtract(line, 327, 338)) + "," + // Foreign Inc
                                 formatDecimal(safeExtract(line, 339, 351)) + "," + // Other Inc
                                 formatDecimal(safeExtract(line, 352, 363)) + "," + // Taxable Div
                                 formatDecimal(safeExtract(line, 364, 375)) + "," + // Div Tax Credit
-                                formatDecimal(safeExtract(line, 543, 554));        // Actual Div (Second one)
+                                formatDecimal(safeExtract(line, 543, 554));        // Actual Div (Second)
 
                 writer.println(row);
             }
@@ -117,7 +117,7 @@ public class RL16ParserMain {
         }
     }
 
-    // --- UTILITIES (Same as T3) ---
+    // --- UTILITIES ---
 
     private static String safeExtract(String line, int start, int end) {
         int actualStart = start - 1;
